@@ -11,8 +11,11 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
+import SEO from '../../components/SEO';
 import { programCategories } from '../../data/programsData';
 import { testimonials } from '../../data/testimonialsData';
+import useScrollAnimation from '../../hooks/useScrollAnimation';
+import useCountUp from '../../hooks/useCountUp';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -20,48 +23,38 @@ const HomePage = () => {
   const heroRef = useRef(null);
   const statsRef = useRef(null);
 
-  useEffect(() => {
-    // Animate stats on scroll
-    const statsElements = gsap.utils.toArray('.stat-item');
-    statsElements.forEach((stat) => {
-      gsap.fromTo(stat,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          scrollTrigger: {
-            trigger: stat,
-            start: 'top 85%',
-          }
-        }
-      );
-    });
+  // Initialize scroll animations
+  useScrollAnimation();
 
-    // Animate feature cards
-    const featureCards = gsap.utils.toArray('.feature-card');
-    featureCards.forEach((card, i) => {
-      gsap.fromTo(card,
-        { opacity: 0, y: 50 },
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.8,
-          delay: i * 0.1,
-          scrollTrigger: {
-            trigger: card,
-            start: 'top 85%',
-          }
-        }
-      );
-    });
+  // Counter animations for stats
+  const [studentsCount, studentsRef] = useCountUp(10000, 2500);
+  const [programsCount, programsRef] = useCountUp(50, 2000);
+  const [placementRate, placementRef] = useCountUp(95, 2200);
+  const [partnersCount, partnersRef] = useCountUp(200, 2300);
+
+  useEffect(() => {
+    // Hero text animation
+    gsap.fromTo('.hero-title',
+      { opacity: 0, y: 50 },
+      { opacity: 1, y: 0, duration: 1, delay: 0.3, ease: 'power3.out' }
+    );
+
+    gsap.fromTo('.hero-subtitle',
+      { opacity: 0, y: 30 },
+      { opacity: 1, y: 0, duration: 1, delay: 0.5, ease: 'power3.out' }
+    );
+
+    gsap.fromTo('.hero-buttons',
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 1, delay: 0.7, ease: 'power3.out' }
+    );
   }, []);
 
   const stats = [
-    { label: 'Students Enrolled', value: '10,000+', icon: Users },
-    { label: 'Courses Offered', value: '45+', icon: BookOpen },
-    { label: 'Industry Partners', value: '150+', icon: Briefcase },
-    { label: 'Placement Rate', value: '92%', icon: TrendingUp },
+    { label: 'Students Enrolled', value: studentsCount, ref: studentsRef, suffix: '+', icon: Users },
+    { label: 'Courses Offered', value: programsCount, ref: programsRef, suffix: '+', icon: BookOpen },
+    { label: 'Industry Partners', value: partnersCount, ref: partnersRef, suffix: '+', icon: Briefcase },
+    { label: 'Placement Rate', value: placementRate, ref: placementRef, suffix: '%', icon: TrendingUp },
   ];
 
   const features = [
@@ -89,6 +82,12 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="VESDM - Vocational Education & Skill Development | Transform Your Future"
+        description="Join 10,000+ students building successful careers with VESDM. Industry-aligned vocational education, professional certifications, and 95% placement rate."
+        keywords="vocational education, skill development, online courses, diploma programs, professional certification, career training, VESDM"
+        canonical="/"
+      />
       <Header />
 
       {/* Hero Section */}
@@ -116,18 +115,18 @@ const HomePage = () => {
                 <span className="text-sm font-bold uppercase tracking-wider">Learn Without Limits</span>
               </motion.div>
               
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              <h1 className="hero-title text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                 Transform Your Future with{' '}
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-emerald-200">
                   Quality Education
                 </span>
               </h1>
               
-              <p className="text-lg md:text-xl text-blue-100 mb-8 leading-relaxed">
+              <p className="hero-subtitle text-lg md:text-xl text-blue-100 mb-8 leading-relaxed">
                 Join VESDM for industry-aligned skill development, recognized diplomas, and professional certifications that open doors to successful careers.
               </p>
               
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="hero-buttons flex flex-col sm:flex-row gap-4">
                 <Link to="/programs">
                   <Button size="lg" variant="secondary" icon={ArrowRight}>
                     Explore Programs
@@ -140,7 +139,7 @@ const HomePage = () => {
                 </Link>
               </div>
 
-              <div className="mt-12 flex items-center gap-8">
+              <div className="hero-buttons mt-12 flex items-center gap-8">
                 <div className="flex -space-x-3">
                   {[1, 2, 3, 4].map((i) => (
                     <div
@@ -189,11 +188,13 @@ const HomePage = () => {
             {stats.map((stat, i) => {
               const Icon = stat.icon;
               return (
-                <div key={i} className="stat-item text-center">
+                <div key={i} className="stat-item scale-in text-center" ref={stat.ref}>
                   <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-50 rounded-2xl mb-4">
                     <Icon size={32} className="text-[#007ACC]" />
                   </div>
-                  <h3 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">{stat.value}</h3>
+                  <h3 className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">
+                    {stat.value.toLocaleString()}{stat.suffix}
+                  </h3>
                   <p className="text-sm text-slate-600 font-medium">{stat.label}</p>
                 </div>
               );
@@ -225,7 +226,7 @@ const HomePage = () => {
             </motion.p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 stagger-item">
             {programCategories.map((category, i) => {
               const Icon = category.icon;
               return (
@@ -248,7 +249,7 @@ const HomePage = () => {
             })}
           </div>
 
-          <div className="text-center mt-12">
+          <div className="text-center mt-12 reveal">
             <Link to="/programs">
               <Button size="lg" icon={ArrowRight}>
                 View All Programs
@@ -261,7 +262,7 @@ const HomePage = () => {
       {/* Why Choose VESDM */}
       <section className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-12">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 reveal">
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 mb-4">
               Why Choose VESDM?
             </h2>
@@ -270,11 +271,11 @@ const HomePage = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 stagger-item">
             {features.map((feature, i) => {
               const Icon = feature.icon;
               return (
-                <div key={i} className="feature-card text-center">
+                <div key={i} className="text-center">
                   <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl mb-6 shadow-lg">
                     <Icon size={36} className="text-white" />
                   </div>

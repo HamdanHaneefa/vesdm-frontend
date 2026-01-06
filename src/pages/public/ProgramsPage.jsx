@@ -23,6 +23,12 @@ const ProgramsPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="Programs & Courses - VESDM | Vocational Education & Skill Development"
+        description="Explore 50+ vocational programs in Technology, Business, Healthcare, Creative Arts, and Engineering. Industry-aligned courses with professional certifications."
+        keywords="vocational programs, skill development courses, diploma programs, certification courses, online education"
+        canonical="/programs"
+      />
       <Header />
 
       {/* Hero Section */}

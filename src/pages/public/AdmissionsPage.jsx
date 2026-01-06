@@ -6,6 +6,7 @@ import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Input from '../../components/Input';
 import Card from '../../components/Card';
+import SEO from '../../components/SEO';
 
 const AdmissionsPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -77,6 +78,12 @@ const AdmissionsPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="Admissions - Apply Now | VESDM Vocational Education"
+        description="Start your journey with VESDM. Learn about admission requirements, application process, and deadlines. Apply online for vocational programs today."
+        keywords="vesdm admissions, apply now, admission process, enrollment, application requirements"
+        canonical="/admissions"
+      />
       <Header />
 
       {/* Hero Section */}

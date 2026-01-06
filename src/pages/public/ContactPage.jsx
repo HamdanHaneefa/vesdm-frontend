@@ -4,10 +4,14 @@ import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle } from 'lucide-reac
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
-import Input from '../../components/Input';
 import Card from '../../components/Card';
+import FormInput from '../../components/FormInput';
+import SEO from '../../components/SEO';
+import { useToast } from '../../components/ToastProvider';
+import { validators } from '../../utils/validation';
 
 const ContactPage = () => {
+  const { success, error } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -15,23 +19,103 @@ const ContactPage = () => {
     inquiryType: 'general',
     message: '',
   });
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [status, setStatus] = useState('idle'); // idle | loading | success | error
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (fieldName, value) => {
+    setFormData({ ...formData, [fieldName]: value });
+    
+    // Clear error when user starts typing
+    if (touched[fieldName]) {
+      validateField(fieldName, value);
+    }
+  };
+
+  const handleBlur = (fieldName) => {
+    setTouched({ ...touched, [fieldName]: true });
+    validateField(fieldName, formData[fieldName]);
+  };
+
+  const validateField = (fieldName, value) => {
+    let fieldError = '';
+
+    switch (fieldName) {
+      case 'name':
+        fieldError = validators.required(value, 'Name');
+        break;
+      case 'email':
+        fieldError = validators.email(value);
+        break;
+      case 'phone':
+        fieldError = validators.phone(value);
+        break;
+      case 'message':
+        fieldError = validators.required(value, 'Message') || 
+                     validators.minLength(value, 10, 'Message');
+        break;
+      default:
+        break;
+    }
+
+    setErrors({ ...errors, [fieldName]: fieldError });
+    return fieldError === '';
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const newTouched = {};
+
+    ['name', 'email', 'phone', 'message'].forEach(field => {
+      newTouched[field] = true;
+      let fieldError = '';
+
+      switch (field) {
+        case 'name':
+          fieldError = validators.required(formData[field], 'Name');
+          break;
+        case 'email':
+          fieldError = validators.email(formData[field]);
+          break;
+        case 'phone':
+          fieldError = validators.phone(formData[field]);
+          break;
+        case 'message':
+          fieldError = validators.required(formData[field], 'Message') || 
+                       validators.minLength(formData[field], 10, 'Message');
+          break;
+        default:
+          break;
+      }
+
+      if (fieldError) newErrors[field] = fieldError;
+    });
+
+    setTouched(newTouched);
+    setErrors(newErrors);
+    
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      error('Please fix all errors before submitting');
+      return;
+    }
+
     setStatus('loading');
 
     // Simulate API call
     setTimeout(() => {
       setStatus('success');
+      success('Message sent successfully! We\'ll get back to you soon.');
       setFormData({ name: '', email: '', phone: '', inquiryType: 'general', message: '' });
+      setTouched({});
+      setErrors({});
       
-      // Reset success message after 5 seconds
-      setTimeout(() => setStatus('idle'), 5000);
+      setTimeout(() => setStatus('idle'), 1000);
     }, 2000);
   };
 
@@ -66,6 +150,12 @@ const ContactPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="Contact Us - VESDM | Get in Touch for Admissions & Inquiries"
+        description="Have questions about our programs? Contact VESDM for admissions, course inquiries, or support. We're here to help you start your learning journey."
+        keywords="contact vesdm, admissions inquiry, course information, support, get in touch"
+        canonical="/contact"
+      />
       <Header />
 
       {/* Hero Section */}
@@ -131,44 +221,56 @@ const ContactPage = () => {
               </p>
 
               <form onSubmit={handleSubmit} className="space-y-6">
-                <Input
+                <FormInput
                   label="Full Name"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.name}
+                  touched={touched.name}
                   placeholder="John Doe"
                   required
+                  icon={Mail}
                 />
 
-                <Input
+                <FormInput
                   label="Email Address"
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={errors.email}
+                  touched={touched.email}
                   placeholder="john@example.com"
                   required
+                  icon={Mail}
                 />
 
-                <Input
+                <FormInput
                   label="Phone Number"
                   type="tel"
                   name="phone"
                   value={formData.phone}
                   onChange={handleChange}
-                  placeholder="+1 (555) 123-4567"
+                  onBlur={handleBlur}
+                  error={errors.phone}
+                  touched={touched.phone}
+                  placeholder="1234567890"
+                  required
+                  icon={Phone}
                 />
 
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
-                    Inquiry Type <span className="text-rose-500">*</span>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Inquiry Type <span className="text-red-500">*</span>
                   </label>
                   <select
                     name="inquiryType"
                     value={formData.inquiryType}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#007ACC] focus:ring-2 focus:ring-[#007ACC]/20 transition-all"
+                    onChange={(e) => handleChange('inquiryType', e.target.value)}
+                    className="w-full px-4 py-3 bg-white border-2 border-slate-200 rounded-xl outline-none focus:border-[#007ACC] focus:ring-4 focus:ring-blue-200 transition-all"
                   >
                     {inquiryTypes.map((type) => (
                       <option key={type.value} value={type.value}>
@@ -179,41 +281,33 @@ const ContactPage = () => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">
-                    Message <span className="text-rose-500">*</span>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    Message <span className="text-red-500">*</span>
                   </label>
                   <textarea
                     name="message"
                     value={formData.message}
-                    onChange={handleChange}
-                    required
+                    onChange={(e) => handleChange('message', e.target.value)}
+                    onBlur={() => handleBlur('message')}
                     rows={5}
                     placeholder="Tell us how we can help you..."
-                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#007ACC] focus:ring-2 focus:ring-[#007ACC]/20 transition-all resize-none"
+                    className={`w-full px-4 py-3 border-2 rounded-xl outline-none transition-all resize-none
+                      ${touched.message && errors.message
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-200'
+                        : 'border-slate-200 focus:border-[#007ACC] focus:ring-blue-200'
+                      } focus:ring-4`}
                   />
+                  {touched.message && errors.message && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-sm text-red-600 mt-2 flex items-center gap-1"
+                    >
+                      <AlertCircle size={14} />
+                      {errors.message}
+                    </motion.p>
+                  )}
                 </div>
-
-                {status === 'success' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-3 text-emerald-800"
-                  >
-                    <CheckCircle size={20} />
-                    <span className="font-medium">Message sent successfully! We'll get back to you soon.</span>
-                  </motion.div>
-                )}
-
-                {status === 'error' && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="p-4 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-3 text-rose-800"
-                  >
-                    <AlertCircle size={20} />
-                    <span className="font-medium">Failed to send message. Please try again.</span>
-                  </motion.div>
-                )}
 
                 <Button
                   type="submit"

@@ -39,6 +39,12 @@ const AboutPage = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      <SEO 
+        title="About VESDM - Our Mission, Vision & Values | Vocational Education"
+        description="Learn about VESDM's commitment to quality vocational education. Discover our mission, vision, values, and the expert team dedicated to your success."
+        keywords="about vesdm, vocational education mission, skill development vision, education values, about us"
+        canonical="/about"
+      />
       <Header />
 
       {/* Hero Section */}

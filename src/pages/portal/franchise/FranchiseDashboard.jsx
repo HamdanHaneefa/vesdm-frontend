@@ -185,7 +185,6 @@ const FranchiseDashboard = () => {
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
-transition={{ delay: 0.8 }}
           
         {/* Revenue Chart */}
         <motion.div

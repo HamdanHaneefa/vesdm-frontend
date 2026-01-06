@@ -1,20 +1,41 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 import './App.css';
+import useSmoothScroll from './hooks/useSmoothScroll';
+import { ToastProvider } from './components/ToastProvider';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Scroll to top component
 function ScrollToTop() {
   const { pathname } = useLocation();
 
   useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      left: 0,
-      behavior: 'instant'
-    });
+    // Force scroll to top with multiple attempts
+    const forceScrollTop = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+      
+      const portalContent = document.querySelector('.portal-content-scroll');
+      if (portalContent) {
+        portalContent.scrollTop = 0;
+      }
+    };
+
+    forceScrollTop();
+    setTimeout(forceScrollTop, 0);
+    setTimeout(forceScrollTop, 10);
+    setTimeout(forceScrollTop, 50);
   }, [pathname]);
 
   return null;
+}
+
+// Smooth scroll wrapper
+function SmoothScrollWrapper({ children }) {
+  useSmoothScroll();
+  return <>{children}</>;
 }
 
 // Public Pages
@@ -29,6 +50,7 @@ import GalleryPage from './pages/public/GalleryPage';
 import ContactPage from './pages/public/ContactPage';
 import CertificateVerificationPage from './pages/public/CertificateVerificationPage';
 import FAQPage from './pages/public/FAQPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Auth Pages
 import LoginPage from './pages/auth/LoginPage';
@@ -66,21 +88,25 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/programs" element={<ProgramsPage />} />
-        <Route path="/programs/:programId" element={<ProgramDetailPage />} />
-        <Route path="/admissions" element={<AdmissionsPage />} />
-        <Route path="/franchise" element={<FranchisePage />} />
-        <Route path="/student-services" element={<StudentServicesPage />} />
-        <Route path="/gallery" element={<GalleryPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/verify-certificate" element={<CertificateVerificationPage />} />
-        <Route path="/faqs" element={<FAQPage />} />
+    <HelmetProvider>
+      <ErrorBoundary>
+        <ToastProvider>
+          <BrowserRouter>
+            <SmoothScrollWrapper>
+              <ScrollToTop />
+              <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<HomePage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/programs" element={<ProgramsPage />} />
+            <Route path="/programs/:programId" element={<ProgramDetailPage />} />
+          <Route path="/admissions" element={<AdmissionsPage />} />
+          <Route path="/franchise" element={<FranchisePage />} />
+          <Route path="/student-services" element={<StudentServicesPage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/verify-certificate" element={<CertificateVerificationPage />} />
+          <Route path="/faqs" element={<FAQPage />} />
 
         {/* Auth Routes */}
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
@@ -107,9 +133,13 @@ function App() {
         </Route>
 
         {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </SmoothScrollWrapper>
     </BrowserRouter>
+    </ToastProvider>
+    </ErrorBoundary>
+    </HelmetProvider>
   );
 }
 

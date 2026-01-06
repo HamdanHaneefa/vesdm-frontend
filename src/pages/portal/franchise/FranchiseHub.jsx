@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -11,10 +11,29 @@ const FranchiseHub = ({ currentUser, onLogout }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const scrollContainerRef = useRef(null);
 
-  // Scroll to top on route change
+  // Scroll to top on route change - AGGRESSIVE
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    const scrollToTop = () => {
+      // Scroll window
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      
+      // Scroll portal container
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0;
+        scrollContainerRef.current.scrollLeft = 0;
+      }
+    };
+
+    // Execute immediately
+    scrollToTop();
+    
+    // Execute again after a tick to catch any delayed renders
+    requestAnimationFrame(() => {
+      scrollToTop();
+      requestAnimationFrame(scrollToTop);
+    });
   }, [location.pathname]);
 
   const menuItems = [
@@ -148,13 +167,18 @@ const FranchiseHub = ({ currentUser, onLogout }) => {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto portal-content-scroll">
           <div className="p-6 max-w-[1600px] mx-auto">
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              onAnimationStart={() => {
+                if (scrollContainerRef.current) {
+                  scrollContainerRef.current.scrollTop = 0;
+                }
+              }}
             >
               <Outlet context={{ currentUser }} />
             </motion.div>
