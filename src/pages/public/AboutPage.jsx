@@ -3,6 +3,7 @@ import { Target, Eye, Heart, Users, Award, TrendingUp, Shield, Zap } from 'lucid
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Card from '../../components/Card';
+import SEO from '../../components/SEO';
 
 const AboutPage = () => {
   const values = [

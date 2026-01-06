@@ -9,6 +9,7 @@ import Card from '../../components/Card';
 import Badge from '../../components/Badge';
 import { programCategories, programs } from '../../data/programsData';
 import { generateSlug } from '../../utils/helpers';
+import SEO from '../../components/SEO';
 
 const ProgramsPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
