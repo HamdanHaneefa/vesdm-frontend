@@ -58,6 +58,8 @@ import LoginPage from './pages/auth/LoginPage';
 // Portal Pages
 import StudentHub from './pages/portal/student/StudentHub';
 import StudentDashboard from './pages/portal/student/StudentDashboard';
+import StudentCourses from './pages/portal/student/StudentCourses';
+import StudentCourseDetails from './pages/portal/student/StudentCourseDetails';
 import StudentProfile from './pages/portal/student/StudentProfile';
 import StudentCertificates from './pages/portal/student/StudentCertificates';
 import StudentResults from './pages/portal/student/StudentResults';
@@ -65,6 +67,8 @@ import StudentResources from './pages/portal/student/StudentResources';
 
 import FranchiseHub from './pages/portal/franchise/FranchiseHub';
 import FranchiseDashboard from './pages/portal/franchise/FranchiseDashboard';
+import CourseManagement from './pages/portal/franchise/CourseManagement';
+import CourseDetails from './pages/portal/franchise/CourseDetails';
 import RegisterStudent from './pages/portal/franchise/RegisterStudent';
 import RegisterExam from './pages/portal/franchise/RegisterExam';
 import PublishResults from './pages/portal/franchise/PublishResults';
@@ -100,13 +104,13 @@ function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/programs" element={<ProgramsPage />} />
             <Route path="/programs/:programId" element={<ProgramDetailPage />} />
-          <Route path="/admissions" element={<AdmissionsPage />} />
-          <Route path="/franchise" element={<FranchisePage />} />
-          <Route path="/student-services" element={<StudentServicesPage />} />
-          <Route path="/gallery" element={<GalleryPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/verify-certificate" element={<CertificateVerificationPage />} />
-          <Route path="/faqs" element={<FAQPage />} />
+            <Route path="/admissions" element={<AdmissionsPage />} />
+            <Route path="/franchise" element={<FranchisePage />} />
+            <Route path="/student-services" element={<StudentServicesPage />} />
+            <Route path="/gallery" element={<GalleryPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/verify-certificate" element={<CertificateVerificationPage />} />
+            <Route path="/faqs" element={<FAQPage />} />
 
         {/* Auth Routes */}
         <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
@@ -115,6 +119,8 @@ function App() {
         <Route path="/portal/student" element={<StudentHub currentUser={currentUser} onLogout={handleLogout} />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<StudentDashboard />} />
+          <Route path="courses" element={<StudentCourses />} />
+          <Route path="courses/:courseId" element={<StudentCourseDetails />} />
           <Route path="profile" element={<StudentProfile />} />
           <Route path="certificates" element={<StudentCertificates />} />
           <Route path="results" element={<StudentResults />} />
@@ -125,6 +131,8 @@ function App() {
         <Route path="/portal/franchise" element={<FranchiseHub currentUser={currentUser} onLogout={handleLogout} />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<FranchiseDashboard />} />
+          <Route path="courses" element={<CourseManagement />} />
+          <Route path="courses/:courseId" element={<CourseDetails />} />
           <Route path="register-student" element={<RegisterStudent />} />
           <Route path="register-exam" element={<RegisterExam />} />
           <Route path="publish-results" element={<PublishResults />} />

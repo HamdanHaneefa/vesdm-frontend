@@ -15,7 +15,7 @@ const PlaceholderPage = ({ title, description }) => {
             {description}
           </p>
           <div className="inline-block px-4 py-2 bg-amber-100 border border-amber-200 rounded-lg text-amber-800 text-sm font-medium">
-            🚧 Under Construction
+            Under Construction
           </div>
         </div>
         <Link

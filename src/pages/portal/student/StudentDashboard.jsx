@@ -82,7 +82,7 @@ const StudentDashboard = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold mb-2">
-              Welcome back, {currentUser?.name || 'Student'}! 👋
+              Welcome back, {currentUser?.name || 'Student'}!
             </h1>
             <p className="text-blue-100 text-lg">Here's what's happening with your learning journey</p>
           </div>

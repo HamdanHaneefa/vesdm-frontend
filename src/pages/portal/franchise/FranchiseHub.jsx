@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  LayoutDashboard, UserPlus, ClipboardList, FileUp, Users, Book,
+  LayoutDashboard, UserPlus, ClipboardList, FileUp, Users, Book, BookOpen,
   LogOut, Menu, X, Bell, ChevronRight, Building2, Home
 } from 'lucide-react';
 
@@ -38,6 +38,7 @@ const FranchiseHub = ({ currentUser, onLogout }) => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/portal/franchise/dashboard' },
+    { id: 'courses', label: 'Course Management', icon: BookOpen, path: '/portal/franchise/courses' },
     { id: 'register-student', label: 'Register Student', icon: UserPlus, path: '/portal/franchise/register-student' },
     { id: 'register-exam', label: 'Register Exam', icon: ClipboardList, path: '/portal/franchise/register-exam' },
     { id: 'publish-results', label: 'Publish Results', icon: FileUp, path: '/portal/franchise/publish-results' },

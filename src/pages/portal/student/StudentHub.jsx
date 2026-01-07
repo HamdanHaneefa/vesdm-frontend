@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, User, Award, FileText, Book, 
-  LogOut, Menu, X, Bell, ChevronRight, GraduationCap, Home
+  LogOut, Menu, X, Bell, ChevronRight, GraduationCap, Home, BookOpen
 } from 'lucide-react';
 
 const StudentHub = ({ currentUser, onLogout }) => {
@@ -11,14 +11,34 @@ const StudentHub = ({ currentUser, onLogout }) => {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const scrollContainerRef = useRef(null);
 
-  // Scroll to top on route change
+  // Scroll to top on route change - AGGRESSIVE
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    const scrollToTop = () => {
+      // Scroll window
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      
+      // Scroll portal container
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 0;
+        scrollContainerRef.current.scrollLeft = 0;
+      }
+    };
+
+    // Execute immediately
+    scrollToTop();
+    
+    // Execute again after a tick to catch any delayed renders
+    requestAnimationFrame(() => {
+      scrollToTop();
+      requestAnimationFrame(scrollToTop);
+    });
   }, [location.pathname]);
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/portal/student/dashboard' },
+    { id: 'courses', label: 'My Courses', icon: BookOpen, path: '/portal/student/courses' },
     { id: 'profile', label: 'My Profile', icon: User, path: '/portal/student/profile' },
     { id: 'certificates', label: 'Certificates', icon: Award, path: '/portal/student/certificates' },
     { id: 'results', label: 'Results', icon: FileText, path: '/portal/student/results' },
@@ -73,7 +93,7 @@ const StudentHub = ({ currentUser, onLogout }) => {
         <nav className="flex-1 px-4 py-2 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path || (item.id === 'courses' && location.pathname.startsWith('/portal/student/courses'));
             return (
               <Link
                 key={item.id}
@@ -144,13 +164,18 @@ const StudentHub = ({ currentUser, onLogout }) => {
         </header>
 
         {/* Page Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto portal-content-scroll">
           <div className="p-6 max-w-[1600px] mx-auto">
             <motion.div
               key={location.pathname}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
+              onAnimationStart={() => {
+                if (scrollContainerRef.current) {
+                  scrollContainerRef.current.scrollTop = 0;
+                }
+              }}
             >
               <Outlet context={{ currentUser }} />
             </motion.div>
@@ -209,26 +234,81 @@ const StudentHub = ({ currentUser, onLogout }) => {
                   </div>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
-                  {menuItems.map((item) => {
-                    const Icon = item.icon;
-                    const isActive = location.pathname === item.path;
-                    return (
-                      <Link
-                        key={item.id}
-                        to={item.path}
-                        onClick={() => setShowMobileMenu(false)}
-                        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all ${
-                          isActive
-                            ? 'bg-gradient-to-r from-[#007ACC] to-blue-600 text-white'
-                            : 'text-slate-600 hover:bg-slate-50'
-                        }`}
-                      >
-                        <Icon size={20} />
-                        <span className="font-semibold text-sm">{item.label}</span>
-                      </Link>
-                    );
-                  })}
+                <nav className="flex-1 px-4 space-y-5 overflow-y-auto">
+                  {/* Main Menu */}
+                  <div>
+                    {mainMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.path}
+                          onClick={() => setShowMobileMenu(false)}
+                          className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all ${
+                            isActive
+                              ? 'bg-gradient-to-r from-[#007ACC] to-blue-600 text-white'
+                              : 'text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Icon size={20} />
+                          <span className="font-semibold text-sm">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {/* Course Management Section */}
+                  <div>
+                    <div className="px-4 mb-2">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Course Management</p>
+                    </div>
+                    {courseMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.path}
+                          onClick={() => setShowMobileMenu(false)}
+                          className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all mb-1 ${
+                            isActive
+                              ? 'bg-gradient-to-r from-[#007ACC] to-blue-600 text-white'
+                              : 'text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Icon size={20} />
+                          <span className="font-semibold text-sm">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+
+                  {/* Profile & Academic Section */}
+                  <div>
+                    <div className="px-4 mb-2">
+                      <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Profile & Academic</p>
+                    </div>
+                    {profileMenuItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <Link
+                          key={item.id}
+                          to={item.path}
+                          onClick={() => setShowMobileMenu(false)}
+                          className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all mb-1 ${
+                            isActive
+                              ? 'bg-gradient-to-r from-[#007ACC] to-blue-600 text-white'
+                              : 'text-slate-600 hover:bg-slate-50'
+                          }`}
+                        >
+                          <Icon size={20} />
+                          <span className="font-semibold text-sm">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
                 </nav>
 
                 <div className="p-4 border-t border-slate-200 space-y-2">

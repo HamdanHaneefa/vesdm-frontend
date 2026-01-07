@@ -16,6 +16,7 @@ const RegisterStudent = () => {
     pincode: '',
     program: '',
     batch: '',
+    assignedCourse: '',
     fatherName: '',
     motherName: '',
     guardianPhone: '',
@@ -28,6 +29,14 @@ const RegisterStudent = () => {
     'Graphic Design',
     'Data Analytics',
     'Mobile App Development',
+  ];
+
+  const availableCourses = [
+    { id: 1, name: 'Digital Marketing Fundamentals', code: 'DM-101' },
+    { id: 2, name: 'Web Development Bootcamp', code: 'WD-201' },
+    { id: 3, name: 'Graphic Design Mastery', code: 'GD-101' },
+    { id: 4, name: 'Data Analytics Professional', code: 'DA-301' },
+    { id: 5, name: 'Mobile App Development', code: 'MAD-201' },
   ];
 
   const batches = ['2026-2028', '2026-2027', '2027-2029'];
@@ -49,7 +58,7 @@ const RegisterStudent = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-4xl font-bold text-slate-900 mb-2">Register New Student 📝</h1>
+        <h1 className="text-4xl font-bold text-slate-900 mb-2">Register New Student</h1>
         <p className="text-slate-500 text-lg">Add new students to your franchise</p>
       </motion.div>
 
@@ -253,6 +262,31 @@ const RegisterStudent = () => {
                   <option key={batch} value={batch}>{batch}</option>
                 ))}
               </select>
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">
+                Assign to Course
+                <span className="text-slate-500 font-normal ml-2">(Optional - Student will be directly enrolled)</span>
+              </label>
+              <select
+                name="assignedCourse"
+                value={formData.assignedCourse}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-emerald-50 border-emerald-200"
+              >
+                <option value="">No Course Assignment (Can be assigned later)</option>
+                {availableCourses.map((course) => (
+                  <option key={course.id} value={course.id}>
+                    {course.name} ({course.code})
+                  </option>
+                ))}
+              </select>
+              {formData.assignedCourse && (
+                <p className="text-sm text-emerald-600 mt-2 flex items-center gap-1">
+                  <BookOpen size={14} />
+                  Student will be automatically enrolled in the selected course
+                </p>
+              )}
             </div>
           </div>
         </motion.div>

@@ -62,7 +62,7 @@ const StudentResults = () => {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
       >
-        <h1 className="text-4xl font-bold text-slate-900 mb-2">Examination Results 📊</h1>
+        <h1 className="text-4xl font-bold text-slate-900 mb-2">Examination Results</h1>
         <p className="text-slate-500 text-lg">View your academic performance and grades</p>
       </motion.div>
 

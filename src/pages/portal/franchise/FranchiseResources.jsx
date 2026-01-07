@@ -115,11 +115,11 @@ const FranchiseResources = () => {
 
   const getTypeIcon = (type) => {
     switch(type) {
-      case 'PDF': return '📄';
-      case 'DOCX': return '📝';
-      case 'XLSX': return '📊';
-      case 'Video': return '🎥';
-      default: return '📁';
+      case 'PDF': return <FileText size={20} className="text-red-500" />;
+      case 'DOCX': return <FileText size={20} className="text-blue-500" />;
+      case 'XLSX': return <FileText size={20} className="text-green-500" />;
+      case 'Video': return <Video size={20} className="text-purple-500" />;
+      default: return <FileText size={20} className="text-slate-500" />;
     }
   };
 
