@@ -187,6 +187,7 @@ const LoginPage = ({ onLogin }) => {
               >
                 <option value="student">Student Portal</option>
                 <option value="franchise">Franchise Portal</option>
+                <option value="admin">Admin Portal</option>
               </select>
             </div>
 
