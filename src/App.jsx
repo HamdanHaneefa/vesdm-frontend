@@ -5,6 +5,7 @@ import './App.css';
 import useSmoothScroll from './hooks/useSmoothScroll';
 import { ToastProvider } from './components/ToastProvider';
 import ErrorBoundary from './components/ErrorBoundary';
+import PlaceholderPage from './components/PlaceholderPage';
 
 // Scroll to top component
 function ScrollToTop() {
@@ -75,6 +76,15 @@ import PublishResults from './pages/portal/franchise/PublishResults';
 import StudentsList from './pages/portal/franchise/StudentsList';
 import FranchiseResources from './pages/portal/franchise/FranchiseResources';
 
+import AdminHub from './pages/portal/admin/AdminHub';
+import AdminDashboard from './pages/portal/admin/AdminDashboard';
+import FranchiseManagement from './pages/portal/admin/FranchiseManagement';
+import FranchiseDetails from './pages/portal/admin/FranchiseDetails';
+import AdminCourseManagement from './pages/portal/admin/CourseManagement';
+import AdminStudentManagement from './pages/portal/admin/StudentManagement';
+import FranchiseRequests from './pages/portal/admin/FranchiseRequests';
+import CertificatesAdmin from './pages/portal/admin/CertificatesAdmin';
+
 function App() {
   const [currentUser, setCurrentUser] = useState(() => {
     const saved = localStorage.getItem('vesdm_user');
@@ -138,6 +148,24 @@ function App() {
           <Route path="publish-results" element={<PublishResults />} />
           <Route path="students" element={<StudentsList />} />
           <Route path="resources" element={<FranchiseResources />} />
+        </Route>
+
+        {/* Admin Portal */}
+        <Route path="/portal/admin" element={<AdminHub currentUser={currentUser} onLogout={handleLogout} />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="franchises" element={<FranchiseManagement />} />
+          <Route path="franchises/:franchiseId" element={<FranchiseDetails />} />
+          <Route path="students" element={<AdminStudentManagement />} />
+          <Route path="courses" element={<AdminCourseManagement />} />
+          <Route path="requests" element={<FranchiseRequests />} />
+          <Route path="certificates" element={<CertificatesAdmin />} />
+          <Route path="results" element={<PlaceholderPage />} />
+          <Route path="analytics" element={<PlaceholderPage />} />
+          <Route path="content" element={<PlaceholderPage />} />
+          <Route path="financial" element={<PlaceholderPage />} />
+          <Route path="communications" element={<PlaceholderPage />} />
+          <Route path="settings" element={<PlaceholderPage />} />
         </Route>
 
         {/* Fallback */}
