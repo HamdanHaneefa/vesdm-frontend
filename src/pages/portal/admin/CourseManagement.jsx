@@ -1,154 +1,182 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, Search, Plus, Edit, Trash2, Eye, EyeOff, Users, 
-  DollarSign, Clock, TrendingUp, Award, MoreVertical, Calendar,
-  CheckCircle, XCircle, AlertCircle, Settings, FileText
+  DollarSign, Clock, Award, Calendar,
+  CheckCircle, XCircle, AlertCircle, FileText, X
 } from 'lucide-react';
+import apiClient from '../../../api/apiClient';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const CourseManagementAdmin = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingCourse, setEditingCourse] = useState(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    type: '',
+    description: '',
+    duration: '',
+    fee: '',
+    eligibility: ''
+  });
+  const [formLoading, setFormLoading] = useState(false);
 
-  // Sample courses data
-  const [courses, setCourses] = useState([
-    {
-      id: 1,
-      name: 'Digital Marketing Professional',
-      category: 'Marketing',
-      duration: '6 months',
-      price: '₹50,000',
-      enrollments: 450,
-      franchises: 8,
-      rating: 4.8,
-      status: 'published',
-      visibility: 'public',
-      description: 'Comprehensive digital marketing course covering SEO, SEM, Social Media, and Analytics',
-      syllabus: 12,
-      resources: 45,
-      lastUpdated: '2026-01-05'
-    },
-    {
-      id: 2,
-      name: 'Web Development Bootcamp',
-      category: 'Technology',
-      duration: '8 months',
-      price: '₹60,000',
-      enrollments: 625,
-      franchises: 10,
-      rating: 4.9,
-      status: 'published',
-      visibility: 'public',
-      description: 'Full-stack web development covering HTML, CSS, JavaScript, React, Node.js, and databases',
-      syllabus: 16,
-      resources: 68,
-      lastUpdated: '2026-01-03'
-    },
-    {
-      id: 3,
-      name: 'Business Management',
-      category: 'Business',
-      duration: '5 months',
-      price: '₹45,000',
-      enrollments: 380,
-      franchises: 7,
-      rating: 4.6,
-      status: 'published',
-      visibility: 'public',
-      description: 'Essential business management skills including leadership, finance, and operations',
-      syllabus: 10,
-      resources: 38,
-      lastUpdated: '2025-12-28'
-    },
-    {
-      id: 4,
-      name: 'Data Analytics',
-      category: 'Technology',
-      duration: '7 months',
-      price: '₹55,000',
-      enrollments: 520,
-      franchises: 9,
-      rating: 4.7,
-      status: 'published',
-      visibility: 'public',
-      description: 'Data analysis using Python, SQL, Excel, and visualization tools',
-      syllabus: 14,
-      resources: 52,
-      lastUpdated: '2026-01-02'
-    },
-    {
-      id: 5,
-      name: 'Graphic Design Mastery',
-      category: 'Design',
-      duration: '4 months',
-      price: '₹40,000',
-      enrollments: 185,
-      franchises: 5,
-      rating: 4.5,
-      status: 'published',
-      visibility: 'hidden',
-      description: 'Professional graphic design using Adobe Creative Suite',
-      syllabus: 8,
-      resources: 28,
-      lastUpdated: '2025-12-15'
-    },
-    {
-      id: 6,
-      name: 'Mobile App Development',
-      category: 'Technology',
-      duration: '6 months',
-      price: '₹52,000',
-      enrollments: 95,
-      franchises: 3,
-      rating: 4.4,
-      status: 'draft',
-      visibility: 'hidden',
-      description: 'Build iOS and Android apps using React Native',
-      syllabus: 11,
-      resources: 32,
-      lastUpdated: '2026-01-01'
-    },
-    {
-      id: 7,
-      name: 'Financial Planning & Analysis',
-      category: 'Finance',
-      duration: '5 months',
-      price: '₹48,000',
-      enrollments: 210,
-      franchises: 6,
-      rating: 4.6,
-      status: 'published',
-      visibility: 'public',
-      description: 'Professional financial planning, budgeting, and investment strategies',
-      syllabus: 9,
-      resources: 35,
-      lastUpdated: '2025-12-20'
-    },
-    {
-      id: 8,
-      name: 'Cloud Computing Fundamentals',
-      category: 'Technology',
-      duration: '4 months',
-      price: '₹45,000',
-      enrollments: 0,
-      franchises: 0,
-      rating: 0,
-      status: 'draft',
-      visibility: 'hidden',
-      description: 'AWS, Azure, and Google Cloud basics for beginners',
-      syllabus: 8,
-      resources: 20,
-      lastUpdated: '2026-01-06'
+  // Fetch courses from backend
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/courses');
+      setCourses(response.data);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching courses:', err);
+      setError('Failed to load courses');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  const handleDeleteCourse = async (courseId) => {
+    if (!window.confirm('Are you sure you want to delete this course?')) {
+      return;
+    }
+
+    try {
+      await apiClient.delete(`/courses/${courseId}`);
+      setCourses(courses.filter(c => c._id !== courseId));
+    } catch (err) {
+      console.error('Error deleting course:', err);
+      alert('Failed to delete course');
+    }
+  };
+
+  const handleAddCourse = async (e) => {
+    e.preventDefault();
+    setFormLoading(true);
+
+    try {
+      const response = await apiClient.post('/courses', {
+        name: formData.name,
+        type: formData.type,
+        description: formData.description,
+        duration: formData.duration,
+        fee: parseFloat(formData.fee),
+        eligibility: formData.eligibility
+      });
+
+      setCourses([...courses, response.data]);
+      setShowAddModal(false);
+      setFormData({
+        name: '',
+        type: '',
+        description: '',
+        duration: '',
+        fee: '',
+        eligibility: ''
+      });
+      alert('Course added successfully!');
+    } catch (err) {
+      console.error('Error adding course:', err);
+      alert('Failed to add course');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleEditClick = (course) => {
+    setEditingCourse(course);
+    setFormData({
+      name: course.name || '',
+      type: course.type || '',
+      description: course.description || '',
+      duration: course.duration || '',
+      fee: course.fee || '',
+      eligibility: course.eligibility || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateCourse = async (e) => {
+    e.preventDefault();
+    setFormLoading(true);
+
+    try {
+      const response = await apiClient.put(`/courses/${editingCourse._id}`, {
+        name: formData.name,
+        type: formData.type,
+        description: formData.description,
+        duration: formData.duration,
+        fee: parseFloat(formData.fee),
+        eligibility: formData.eligibility
+      });
+
+      setCourses(courses.map(c => c._id === editingCourse._id ? response.data : c));
+      setShowEditModal(false);
+      setEditingCourse(null);
+      setFormData({
+        name: '',
+        type: '',
+        description: '',
+        duration: '',
+        fee: '',
+        eligibility: ''
+      });
+      alert('Course updated successfully!');
+    } catch (err) {
+      console.error('Error updating course:', err);
+      alert('Failed to update course');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const toggleVisibility = async (courseId) => {
+    const course = courses.find(c => c._id === courseId);
+    const newVisibility = course.visibility === 'public' ? 'hidden' : 'public';
+
+    try {
+      await apiClient.put(`/courses/${courseId}`, {
+        ...course,
+        visibility: newVisibility
+      });
+      
+      setCourses(courses.map(c => 
+        c._id === courseId 
+          ? { ...c, visibility: newVisibility } 
+          : c
+      ));
+    } catch (err) {
+      console.error('Error updating course visibility:', err);
+      alert('Failed to update course visibility');
+    }
+  };
 
   const filteredCourses = courses.filter(course => {
     const matchesSearch = 
-      course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.category.toLowerCase().includes(searchQuery.toLowerCase());
+      course.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      course.category?.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || course.status === statusFilter;
     const matchesCategory = categoryFilter === 'all' || course.category === categoryFilter;
@@ -173,29 +201,23 @@ const CourseManagementAdmin = () => {
     },
     { 
       label: 'Total Enrollments', 
-      value: courses.reduce((acc, c) => acc + c.enrollments, 0), 
+      value: courses.reduce((acc, c) => acc + (c.enrollments || 0), 0), 
       icon: Users, 
       color: 'purple',
       change: '+145 this week'
     },
     { 
       label: 'Avg. Rating', 
-      value: (courses.filter(c => c.rating > 0).reduce((acc, c) => acc + c.rating, 0) / courses.filter(c => c.rating > 0).length).toFixed(1), 
+      value: courses.filter(c => c.rating > 0).length > 0 
+        ? (courses.filter(c => c.rating > 0).reduce((acc, c) => acc + c.rating, 0) / courses.filter(c => c.rating > 0).length).toFixed(1)
+        : 'N/A', 
       icon: Award, 
       color: 'amber',
       change: '4.7/5.0'
     }
   ];
 
-  const categories = ['all', ...new Set(courses.map(c => c.category))];
-
-  const toggleVisibility = (courseId) => {
-    setCourses(courses.map(c => 
-      c.id === courseId 
-        ? { ...c, visibility: c.visibility === 'public' ? 'hidden' : 'public' } 
-        : c
-    ));
-  };
+  const categories = ['all', ...new Set(courses.map(c => c.category).filter(Boolean))];
 
   const getStatusBadge = (status) => {
     switch (status) {
@@ -216,8 +238,24 @@ const CourseManagementAdmin = () => {
       : <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded flex items-center gap-1"><EyeOff size={10} />Hidden</span>;
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="large" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 flex items-center gap-2">
+          <AlertCircle className="w-5 h-5" />
+          {error}
+        </div>
+      )}
+
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">
@@ -225,7 +263,10 @@ const CourseManagementAdmin = () => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Course Management</h1>
             <p className="text-gray-600">Manage courses, control public visibility, and track performance</p>
           </div>
-          <button className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-red-600/30">
+          <button 
+            onClick={() => setShowAddModal(true)}
+            className="px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2 font-medium shadow-lg shadow-red-600/30"
+          >
             <Plus className="w-5 h-5" />
             Add New Course
           </button>
@@ -290,9 +331,9 @@ const CourseManagementAdmin = () => {
               onChange={(e) => setCategoryFilter(e.target.value)}
               className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
             >
-              {categories.map(c => (
-                <option key={c} value={c}>
-                  {c === 'all' ? 'All Categories' : c}
+              {categories.map(cat => (
+                <option key={cat} value={cat}>
+                  {cat === 'all' ? 'All Categories' : cat}
                 </option>
               ))}
             </select>
@@ -300,11 +341,11 @@ const CourseManagementAdmin = () => {
         </div>
       </div>
 
-      {/* Courses Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Course Cards */}
+      <div className="space-y-4">
         {filteredCourses.map((course, index) => (
           <motion.div
-            key={course.id}
+            key={course._id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
@@ -329,33 +370,30 @@ const CourseManagementAdmin = () => {
                     </div>
                   </div>
                 </div>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <MoreVertical className="w-5 h-5 text-gray-400" />
-                </button>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-4 gap-4 mb-4 pb-4 border-b border-gray-100">
+              <div className="grid grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <div className="flex items-center gap-2 text-gray-500 mb-1">
                     <Users className="w-4 h-4" />
-                    <span className="text-xs">Students</span>
+                    <span className="text-xs">Enrollments</span>
                   </div>
-                  <p className="font-bold text-gray-900">{course.enrollments}</p>
+                  <p className="font-bold text-gray-900">{course.enrollments || 0}</p>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 text-gray-500 mb-1">
                     <Clock className="w-4 h-4" />
                     <span className="text-xs">Duration</span>
                   </div>
-                  <p className="font-bold text-gray-900">{course.duration}</p>
+                  <p className="font-bold text-gray-900">{course.duration || 'N/A'}</p>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 text-gray-500 mb-1">
                     <DollarSign className="w-4 h-4" />
                     <span className="text-xs">Price</span>
                   </div>
-                  <p className="font-bold text-gray-900">{course.price}</p>
+                  <p className="font-bold text-gray-900">{course.price || course.fees || 'N/A'}</p>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 text-gray-500 mb-1">
@@ -369,20 +407,21 @@ const CourseManagementAdmin = () => {
               {/* Additional Info */}
               <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
                 <div className="flex items-center gap-4">
-                  <span>{course.syllabus} modules</span>
-                  <span>{course.resources} resources</span>
-                  <span>{course.franchises} franchises</span>
+                  <span>{course.syllabus || 0} modules</span>
+                  <span>{course.resources || 0} resources</span>
+                  <span>{course.franchises || 0} franchises</span>
                 </div>
                 <div className="flex items-center gap-2 text-xs text-gray-500">
                   <Calendar className="w-3 h-3" />
-                  {new Date(course.lastUpdated).toLocaleDateString()}
+                  {course.lastUpdated ? new Date(course.lastUpdated).toLocaleDateString() : 
+                   course.updatedAt ? new Date(course.updatedAt).toLocaleDateString() : 'N/A'}
                 </div>
               </div>
 
               {/* Actions */}
               <div className="flex gap-2">
                 <button 
-                  onClick={() => toggleVisibility(course.id)}
+                  onClick={() => toggleVisibility(course._id)}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
                     course.visibility === 'public'
                       ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
@@ -401,11 +440,17 @@ const CourseManagementAdmin = () => {
                     </>
                   )}
                 </button>
-                <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2">
+                <button 
+                  onClick={() => handleEditClick(course)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+                >
                   <Edit className="w-4 h-4" />
                   Edit
                 </button>
-                <button className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors">
+                <button 
+                  onClick={() => handleDeleteCourse(course._id)}
+                  className="px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                >
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -422,6 +467,344 @@ const CourseManagementAdmin = () => {
           <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
         </div>
       )}
+
+      {/* Add Course Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-red-100 rounded-lg">
+                    <BookOpen className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Add New Course</h2>
+                    <p className="text-sm text-gray-500">Fill in the course details below</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <form onSubmit={handleAddCourse} className="flex-1 overflow-y-auto">
+                <div className="p-6 space-y-4">
+                  {/* Course Name */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Course Name <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g., Web Development Bootcamp"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Course Type */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Course Type <span className="text-red-600">*</span>
+                    </label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      <option value="">Select course type</option>
+                      <option value="Full-time">Full-time</option>
+                      <option value="Part-time">Part-time</option>
+                      <option value="Online">Online</option>
+                      <option value="Hybrid">Hybrid</option>
+                      <option value="Certificate">Certificate</option>
+                      <option value="Diploma">Diploma</option>
+                      <option value="Degree">Degree</option>
+                    </select>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      rows="3"
+                      placeholder="Describe the course content, objectives, and outcomes..."
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                    />
+                  </div>
+
+                  {/* Duration and Fee - Side by side */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Duration
+                      </label>
+                      <input
+                        type="text"
+                        name="duration"
+                        value={formData.duration}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 6 months"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Fee
+                      </label>
+                      <input
+                        type="number"
+                        name="fee"
+                        value={formData.fee}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 50000"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Eligibility */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Eligibility Criteria
+                    </label>
+                    <input
+                      type="text"
+                      name="eligibility"
+                      value={formData.eligibility}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 10+2 or equivalent"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={formLoading}
+                    className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium shadow-lg shadow-red-600/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {formLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Adding...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-5 h-5" />
+                        Add Course
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Course Modal */}
+      <AnimatePresence>
+        {showEditModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <Edit className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Edit Course</h2>
+                    <p className="text-sm text-gray-500">Update course details</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingCourse(null);
+                  }}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <form onSubmit={handleUpdateCourse} className="flex-1 overflow-y-auto">
+                <div className="p-6 space-y-4">
+                  {/* Course Name */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Course Name <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g., Web Development Bootcamp"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Course Type */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Course Type <span className="text-red-600">*</span>
+                    </label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    >
+                      <option value="">Select course type</option>
+                      <option value="Full-time">Full-time</option>
+                      <option value="Part-time">Part-time</option>
+                      <option value="Online">Online</option>
+                      <option value="Hybrid">Hybrid</option>
+                      <option value="Certificate">Certificate</option>
+                      <option value="Diploma">Diploma</option>
+                      <option value="Degree">Degree</option>
+                    </select>
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={formData.description}
+                      onChange={handleInputChange}
+                      rows="3"
+                      placeholder="Describe the course content, objectives, and outcomes..."
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                    />
+                  </div>
+
+                  {/* Duration and Fee - Side by side */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Duration
+                      </label>
+                      <input
+                        type="text"
+                        name="duration"
+                        value={formData.duration}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 6 months"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Fee
+                      </label>
+                      <input
+                        type="number"
+                        name="fee"
+                        value={formData.fee}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 50000"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Eligibility */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Eligibility Criteria
+                    </label>
+                    <input
+                      type="text"
+                      name="eligibility"
+                      value={formData.eligibility}
+                      onChange={handleInputChange}
+                      placeholder="e.g., 10+2 or equivalent"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 px-6 pb-6">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingCourse(null);
+                    }}
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={formLoading}
+                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg shadow-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {formLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        Update Course
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

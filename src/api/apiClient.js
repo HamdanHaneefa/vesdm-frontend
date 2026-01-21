@@ -12,12 +12,9 @@ const apiClient = axios.create({
 // Request interceptor for adding auth token
 apiClient.interceptors.request.use(
   (config) => {
-    const user = localStorage.getItem('vesdm_user');
-    if (user) {
-      const { token } = JSON.parse(user);
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
+    const token = localStorage.getItem('vesdm_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -32,7 +29,7 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 || error.response?.status === 403) {
       console.warn('Authentication error:', error.response.data);
-      localStorage.removeItem('vesdm_user');
+      localStorage.removeItem('vesdm_token');
       window.location.href = '/login';
     }
     return Promise.reject(error);

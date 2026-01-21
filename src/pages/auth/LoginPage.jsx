@@ -15,15 +15,34 @@ import {
   Loader2,
   AlertCircle
 } from 'lucide-react';
+import apiClient from '../../api/apiClient';
+import { useAuth } from '../../contexts/AuthContext';
 
-const LoginPage = ({ onLogin }) => {
+const LoginPage = () => {
   const navigate = useNavigate();
+  const { login, isAuthenticated, user, loading } = useAuth();
   const infoSideRef = useRef(null);
 
-  const [formData, setFormData] = useState({ email: '', password: '', role: 'student' });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && isAuthenticated() && user) {
+      navigate(`/portal/${user.role}`, { replace: true });
+    }
+  }, [loading, isAuthenticated, user, navigate]);
+
+  // Check if user was logged out due to role change
+  useEffect(() => {
+    const roleChanged = localStorage.getItem('vesdm_role_changed');
+    if (roleChanged) {
+      setError('Your account role has been changed by an administrator. Please login again.');
+      localStorage.removeItem('vesdm_role_changed');
+    }
+  }, []);
 
   // Floating animation for cards
   useEffect(() => {
@@ -44,22 +63,29 @@ const LoginPage = ({ onLogin }) => {
     setIsLoading(true);
     setError('');
 
-    // Simulated login - replace with actual API call
-    setTimeout(() => {
-      if (formData.email && formData.password) {
-        const userData = {
-          email: formData.email,
-          role: formData.role,
-          name: 'Test User',
-          regNumber: 'VESD-2026-001',
-        };
-        onLogin(userData);
-        navigate(`/portal/${formData.role}`);
-      } else {
-        setError('Invalid credentials. Please try again.');
-      }
+    try {
+      const response = await apiClient.post('/auth/login', {
+        email: formData.email,
+        password: formData.password,
+      });
+
+      const { token, user } = response.data;
+
+      // Store token and user data using auth context
+      login(token, user);
+
+      // Navigate to the appropriate portal based on user role
+      navigate(`/portal/${user.role}`, { replace: true });
+    } catch (err) {
+      console.error('Login error:', err);
+      setError(
+        err.response?.data?.msg || 
+        err.response?.data?.message || 
+        'Login failed. Please check your credentials and try again.'
+      );
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const stats = [
@@ -175,6 +201,7 @@ const LoginPage = ({ onLogin }) => {
             onSubmit={handleSubmit}
             className="space-y-5"
           >
+<<<<<<< HEAD
             {/* Portal Type Selection */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-2.5 uppercase tracking-wide">
@@ -191,6 +218,8 @@ const LoginPage = ({ onLogin }) => {
               </select>
             </div>
 
+=======
+>>>>>>> 3a4cb86 (Connect authentication backend)
             {/* Email/Username */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-2.5 uppercase tracking-wide">
@@ -280,8 +309,8 @@ const LoginPage = ({ onLogin }) => {
           {/* Demo Credentials */}
           <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
             <p className="text-xs text-slate-600 mb-2 font-semibold">Demo Credentials:</p>
-            <p className="text-xs text-slate-600">Email: <span className="font-mono font-semibold">demo@vesdm.edu</span></p>
-            <p className="text-xs text-slate-600">Password: <span className="font-mono font-semibold">demo123</span></p>
+            <p className="text-xs text-slate-600">Email: <span className="font-mono font-semibold">admin@vesdm.com</span></p>
+            <p className="text-xs text-slate-600">Password: <span className="font-mono font-semibold">admin123</span></p>
           </div>
         </div>
       </div>

@@ -5,8 +5,10 @@ import {
   LayoutDashboard, User, Award, FileText, Book, 
   LogOut, Menu, X, Bell, ChevronRight, GraduationCap, Home, BookOpen
 } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
 
-const StudentHub = ({ currentUser, onLogout }) => {
+const StudentHub = () => {
+  const { user: currentUser, logout } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
@@ -46,8 +48,7 @@ const StudentHub = ({ currentUser, onLogout }) => {
   ];
 
   const handleLogout = () => {
-    onLogout();
-    navigate('/login');
+    logout();
   };
 
   return (

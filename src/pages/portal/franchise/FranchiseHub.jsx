@@ -5,8 +5,10 @@ import {
   LayoutDashboard, UserPlus, ClipboardList, FileUp, Users, Book, BookOpen,
   LogOut, Menu, X, Bell, ChevronRight, Building2, Home
 } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
 
-const FranchiseHub = ({ currentUser, onLogout }) => {
+const FranchiseHub = () => {
+  const { user: currentUser, logout } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
@@ -47,8 +49,7 @@ const FranchiseHub = ({ currentUser, onLogout }) => {
   ];
 
   const handleLogout = () => {
-    onLogout();
-    navigate('/login');
+    logout();
   };
 
   return (

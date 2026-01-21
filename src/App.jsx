@@ -1,11 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { HelmetProvider } from 'react-helmet-async';
 import './App.css';
 import useSmoothScroll from './hooks/useSmoothScroll';
 import { ToastProvider } from './components/ToastProvider';
 import ErrorBoundary from './components/ErrorBoundary';
 import PlaceholderPage from './components/PlaceholderPage';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/ProtectedRoute';
 
 // Scroll to top component
 function ScrollToTop() {
@@ -86,95 +88,103 @@ import FranchiseRequests from './pages/portal/admin/FranchiseRequests';
 import CertificatesAdmin from './pages/portal/admin/CertificatesAdmin';
 
 function App() {
-  const [currentUser, setCurrentUser] = useState(() => {
-    const saved = localStorage.getItem('vesdm_user');
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const handleLogin = (userData) => {
-    setCurrentUser(userData);
-    localStorage.setItem('vesdm_user', JSON.stringify(userData));
-  };
-
-  const handleLogout = () => {
-    setCurrentUser(null);
-    localStorage.removeItem('vesdm_user');
-  };
-
   return (
     <HelmetProvider>
       <ErrorBoundary>
         <ToastProvider>
           <BrowserRouter>
-            <SmoothScrollWrapper>
-              <ScrollToTop />
-              <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<HomePage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/programs" element={<ProgramsPage />} />
-            <Route path="/programs/:programId" element={<ProgramDetailPage />} />
-            <Route path="/admissions" element={<AdmissionsPage />} />
-            <Route path="/franchise" element={<FranchisePage />} />
-            <Route path="/student-services" element={<StudentServicesPage />} />
-            <Route path="/gallery" element={<GalleryPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/verify-certificate" element={<CertificateVerificationPage />} />
-            <Route path="/faqs" element={<FAQPage />} />
+            <AuthProvider>
+              <SmoothScrollWrapper>
+                <ScrollToTop />
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/about" element={<AboutPage />} />
+                  <Route path="/programs" element={<ProgramsPage />} />
+                  <Route path="/programs/:programId" element={<ProgramDetailPage />} />
+                  <Route path="/admissions" element={<AdmissionsPage />} />
+                  <Route path="/franchise" element={<FranchisePage />} />
+                  <Route path="/student-services" element={<StudentServicesPage />} />
+                  <Route path="/gallery" element={<GalleryPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/verify-certificate" element={<CertificateVerificationPage />} />
+                  <Route path="/faqs" element={<FAQPage />} />
 
-        {/* Auth Routes */}
-        <Route path="/login" element={<LoginPage onLogin={handleLogin} />} />
+                  {/* Auth Routes */}
+                  <Route path="/login" element={<LoginPage />} />
 
-        {/* Student Portal */}
-        <Route path="/portal/student" element={<StudentHub currentUser={currentUser} onLogout={handleLogout} />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<StudentDashboard />} />
-          <Route path="courses" element={<StudentCourses />} />
-          <Route path="courses/:courseId" element={<StudentCourseDetails />} />
-          <Route path="profile" element={<StudentProfile />} />
-          <Route path="certificates" element={<StudentCertificates />} />
-          <Route path="results" element={<StudentResults />} />
-          <Route path="resources" element={<StudentResources />} />
-        </Route>
+                  {/* Student Portal - Protected */}
+                  <Route
+                    path="/portal/student"
+                    element={
+                      <ProtectedRoute allowedRoles="student">
+                        <StudentHub />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                    <Route path="dashboard" element={<StudentDashboard />} />
+                    <Route path="courses" element={<StudentCourses />} />
+                    <Route path="courses/:courseId" element={<StudentCourseDetails />} />
+                    <Route path="profile" element={<StudentProfile />} />
+                    <Route path="certificates" element={<StudentCertificates />} />
+                    <Route path="results" element={<StudentResults />} />
+                    <Route path="resources" element={<StudentResources />} />
+                  </Route>
 
-        {/* Franchise Portal */}
-        <Route path="/portal/franchise" element={<FranchiseHub currentUser={currentUser} onLogout={handleLogout} />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<FranchiseDashboard />} />
-          <Route path="courses" element={<CourseManagement />} />
-          <Route path="courses/:courseId" element={<CourseDetails />} />
-          <Route path="register-student" element={<RegisterStudent />} />
-          <Route path="register-exam" element={<RegisterExam />} />
-          <Route path="publish-results" element={<PublishResults />} />
-          <Route path="students" element={<StudentsList />} />
-          <Route path="resources" element={<FranchiseResources />} />
-        </Route>
+                  {/* Franchise Portal - Protected */}
+                  <Route
+                    path="/portal/franchise"
+                    element={
+                      <ProtectedRoute allowedRoles={['franchisee', 'admin']}>
+                        <FranchiseHub />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                    <Route path="dashboard" element={<FranchiseDashboard />} />
+                    <Route path="courses" element={<CourseManagement />} />
+                    <Route path="courses/:courseId" element={<CourseDetails />} />
+                    <Route path="register-student" element={<RegisterStudent />} />
+                    <Route path="register-exam" element={<RegisterExam />} />
+                    <Route path="publish-results" element={<PublishResults />} />
+                    <Route path="students" element={<StudentsList />} />
+                    <Route path="resources" element={<FranchiseResources />} />
+                  </Route>
 
-        {/* Admin Portal */}
-        <Route path="/portal/admin" element={<AdminHub currentUser={currentUser} onLogout={handleLogout} />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<AdminDashboard />} />
-          <Route path="franchises" element={<FranchiseManagement />} />
-          <Route path="franchises/:franchiseId" element={<FranchiseDetails />} />
-          <Route path="students" element={<AdminStudentManagement />} />
-          <Route path="courses" element={<AdminCourseManagement />} />
-          <Route path="requests" element={<FranchiseRequests />} />
-          <Route path="certificates" element={<CertificatesAdmin />} />
-          <Route path="results" element={<PlaceholderPage />} />
-          <Route path="analytics" element={<PlaceholderPage />} />
-          <Route path="content" element={<PlaceholderPage />} />
-          <Route path="financial" element={<PlaceholderPage />} />
-          <Route path="communications" element={<PlaceholderPage />} />
-          <Route path="settings" element={<PlaceholderPage />} />
-        </Route>
+                  {/* Admin Portal - Protected */}
+                  <Route
+                    path="/portal/admin"
+                    element={
+                      <ProtectedRoute allowedRoles="admin">
+                        <AdminHub />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<Navigate to="dashboard" replace />} />
+                    <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="franchises" element={<FranchiseManagement />} />
+                    <Route path="franchises/:franchiseId" element={<FranchiseDetails />} />
+                    <Route path="students" element={<AdminStudentManagement />} />
+                    <Route path="courses" element={<AdminCourseManagement />} />
+                    <Route path="requests" element={<FranchiseRequests />} />
+                    <Route path="certificates" element={<CertificatesAdmin />} />
+                    <Route path="results" element={<PlaceholderPage />} />
+                    <Route path="analytics" element={<PlaceholderPage />} />
+                    <Route path="content" element={<PlaceholderPage />} />
+                    <Route path="financial" element={<PlaceholderPage />} />
+                    <Route path="communications" element={<PlaceholderPage />} />
+                    <Route path="settings" element={<PlaceholderPage />} />
+                  </Route>
 
-        {/* Fallback */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-      </SmoothScrollWrapper>
-    </BrowserRouter>
-    </ToastProvider>
-    </ErrorBoundary>
+                  {/* Fallback */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </SmoothScrollWrapper>
+            </AuthProvider>
+          </BrowserRouter>
+        </ToastProvider>
+      </ErrorBoundary>
     </HelmetProvider>
   );
 }

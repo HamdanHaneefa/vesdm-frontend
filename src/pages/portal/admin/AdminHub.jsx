@@ -6,8 +6,10 @@ import {
   LogOut, Menu, X, Bell, ChevronRight, Shield, Home, ClipboardCheck,
   TrendingUp, Database, Award, MessageSquare, DollarSign
 } from 'lucide-react';
+import { useAuth } from '../../../contexts/AuthContext';
 
-const AdminHub = ({ currentUser, onLogout }) => {
+const AdminHub = () => {
+  const { user: currentUser, logout } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
@@ -45,8 +47,7 @@ const AdminHub = ({ currentUser, onLogout }) => {
   ];
 
   const handleLogout = () => {
-    onLogout();
-    navigate('/login');
+    logout();
   };
 
   return (

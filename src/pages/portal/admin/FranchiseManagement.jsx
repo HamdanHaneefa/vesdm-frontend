@@ -1,147 +1,125 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Building2, Search, Filter, MapPin, Phone, Mail, Users, DollarSign,
-  CheckCircle, XCircle, Edit, Eye, MoreVertical, TrendingUp, Calendar, Clock
+  CheckCircle, XCircle, Edit, Eye, MoreVertical, TrendingUp, Calendar, Clock, Plus, X
 } from 'lucide-react';
+import apiClient from '../../../api/apiClient';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const FranchiseManagement = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [franchises, setFranchises] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  });
+  const [formLoading, setFormLoading] = useState(false);
 
-  const franchises = [
-    {
-      id: 1,
-      name: 'Mumbai Central Branch',
-      owner: 'Rajesh Kumar',
-      email: 'rajesh@mumbaicentral.com',
-      phone: '+91 98765 43210',
-      location: 'Mumbai, Maharashtra',
-      students: 450,
-      revenue: 2250000,
-      status: 'active',
-      joined: '2023-01-15',
-      rating: 4.8,
-      courses: 15
-    },
-    {
-      id: 2,
-      name: 'Delhi North Branch',
-      owner: 'Priya Sharma',
-      email: 'priya@delhinorth.com',
-      phone: '+91 98765 43211',
-      location: 'Delhi, NCR',
-      students: 385,
-      revenue: 1925000,
-      status: 'active',
-      joined: '2023-03-20',
-      rating: 4.6,
-      courses: 12
-    },
-    {
-      id: 3,
-      name: 'Bangalore Tech Hub',
-      owner: 'Amit Patel',
-      email: 'amit@bangaloretechhub.com',
-      phone: '+91 98765 43212',
-      location: 'Bangalore, Karnataka',
-      students: 420,
-      revenue: 2100000,
-      status: 'active',
-      joined: '2023-02-10',
-      rating: 4.9,
-      courses: 18
-    },
-    {
-      id: 4,
-      name: 'Pune West Branch',
-      owner: 'Sneha Desai',
-      email: 'sneha@punewest.com',
-      phone: '+91 98765 43213',
-      location: 'Pune, Maharashtra',
-      students: 310,
-      revenue: 1550000,
-      status: 'active',
-      joined: '2023-05-12',
-      rating: 4.5,
-      courses: 10
-    },
-    {
-      id: 5,
-      name: 'Chennai South Branch',
-      owner: 'Karthik Reddy',
-      email: 'karthik@chennaisouth.com',
-      phone: '+91 98765 43214',
-      location: 'Chennai, Tamil Nadu',
-      students: 295,
-      revenue: 1475000,
-      status: 'active',
-      joined: '2023-04-08',
-      rating: 4.7,
-      courses: 11
-    },
-    {
-      id: 6,
-      name: 'Kolkata East Branch',
-      owner: 'Debashish Roy',
-      email: 'debashish@kolkataeast.com',
-      phone: '+91 98765 43215',
-      location: 'Kolkata, West Bengal',
-      students: 0,
-      revenue: 0,
-      status: 'pending',
-      joined: '2026-01-05',
-      rating: 0,
-      courses: 0
-    },
-    {
-      id: 7,
-      name: 'Hyderabad Branch',
-      owner: 'Lakshmi Naidu',
-      email: 'lakshmi@hyderabad.com',
-      phone: '+91 98765 43216',
-      location: 'Hyderabad, Telangana',
-      students: 245,
-      revenue: 1225000,
-      status: 'suspended',
-      joined: '2023-06-15',
-      rating: 3.8,
-      courses: 8
-    },
-  ];
+  useEffect(() => {
+    fetchFranchises();
+  }, []);
+
+  const fetchFranchises = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get('/users');
+      setFranchises(response.data);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching franchises:', err);
+      setError('Failed to load franchises');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddFranchise = async (e) => {
+    e.preventDefault();
+    setFormLoading(true);
+
+    try {
+      const response = await apiClient.post('/users', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password
+      });
+
+      await fetchFranchises();
+      setShowAddModal(false);
+      setFormData({ name: '', email: '', password: '' });
+      alert('Franchisee created successfully!');
+    } catch (err) {
+      console.error('Error creating franchisee:', err);
+      alert(err.response?.data?.msg || 'Failed to create franchisee');
+    } finally {
+      setFormLoading(false);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const filteredFranchises = franchises.filter(franchise => {
-    const matchesSearch = franchise.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         franchise.owner.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         franchise.location.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch = 
+      franchise.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      franchise.email?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || franchise.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const stats = [
-    { label: 'Total Franchises', value: franchises.filter(f => f.status === 'active').length, icon: Building2, color: 'blue' },
-    { label: 'Pending Approval', value: franchises.filter(f => f.status === 'pending').length, icon: Clock, color: 'amber' },
-    { label: 'Total Students', value: franchises.reduce((sum, f) => sum + f.students, 0).toLocaleString(), icon: Users, color: 'emerald' },
-    { label: 'Total Revenue', value: `₹${(franchises.reduce((sum, f) => sum + f.revenue, 0) / 100000).toFixed(1)}L`, icon: DollarSign, color: 'purple' },
+    { label: 'Total Franchises', value: franchises.filter(f => f.role === 'franchisee').length, icon: Building2, color: 'blue' },
+    { label: 'Active Users', value: franchises.length, icon: Users, color: 'emerald' },
+    { label: 'Registered', value: franchises.length, icon: CheckCircle, color: 'purple' },
+    { label: 'This Month', value: franchises.filter(f => {
+      const created = new Date(f.createdAt);
+      const now = new Date();
+      return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+    }).length, icon: TrendingUp, color: 'amber' },
   ];
 
-  const getStatusBadge = (status) => {
-    switch(status) {
-      case 'active':
-        return <span className="px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full flex items-center gap-1"><CheckCircle size={12} />Active</span>;
-      case 'pending':
-        return <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full flex items-center gap-1"><Clock size={12} />Pending</span>;
-      case 'suspended':
-        return <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full flex items-center gap-1"><XCircle size={12} />Suspended</span>;
-      default:
-        return null;
-    }
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="large" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+          {error}
+        </div>
+      )}
+
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Franchise Management</h1>
+          <p className="text-gray-600 mt-1">Manage franchisee accounts and permissions</p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 font-semibold shadow-lg"
+        >
+          <Plus className="w-5 h-5" />
+          Add Franchisee
+        </button>
+      </div>
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, index) => {
@@ -176,14 +154,14 @@ const FranchiseManagement = () => {
             <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by name, owner, or location..."
+              placeholder="Search by name or email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
           <div className="flex gap-2">
-            {['all', 'active', 'pending', 'suspended'].map((status) => (
+            {['all', 'active'].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
@@ -204,7 +182,7 @@ const FranchiseManagement = () => {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredFranchises.map((franchise, index) => (
           <motion.div
-            key={franchise.id}
+            key={franchise._id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 + index * 0.1 }}
@@ -216,10 +194,12 @@ const FranchiseManagement = () => {
                 <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                   <Building2 size={28} />
                 </div>
-                {getStatusBadge(franchise.status)}
+                <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-bold rounded-full flex items-center gap-1">
+                  <CheckCircle size={12} />Franchisee
+                </span>
               </div>
-              <h3 className="text-xl font-bold mb-1">{franchise.name}</h3>
-              <p className="text-blue-100 text-sm">{franchise.owner}</p>
+              <h3 className="text-xl font-bold mb-1">{franchise.name || 'Unnamed'}</h3>
+              <p className="text-blue-100 text-sm">Role: {franchise.role}</p>
             </div>
 
             {/* Content */}
@@ -227,80 +207,30 @@ const FranchiseManagement = () => {
               {/* Contact Info */}
               <div className="space-y-3 mb-6">
                 <div className="flex items-center gap-3 text-sm">
-                  <MapPin className="text-slate-400" size={16} />
-                  <span className="text-slate-600">{franchise.location}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
                   <Mail className="text-slate-400" size={16} />
                   <span className="text-slate-600">{franchise.email}</span>
                 </div>
                 <div className="flex items-center gap-3 text-sm">
-                  <Phone className="text-slate-400" size={16} />
-                  <span className="text-slate-600">{franchise.phone}</span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
                   <Calendar className="text-slate-400" size={16} />
-                  <span className="text-slate-600">Joined: {new Date(franchise.joined).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                  <span className="text-slate-600">
+                    Joined: {franchise.createdAt ? new Date(franchise.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}
+                  </span>
                 </div>
               </div>
 
-              {/* Stats */}
-              {franchise.status !== 'pending' && (
-                <div className="grid grid-cols-3 gap-3 mb-6">
-                  <div className="text-center p-3 bg-slate-50 rounded-xl">
-                    <p className="text-2xl font-bold text-slate-900">{franchise.students}</p>
-                    <p className="text-xs text-slate-600">Students</p>
-                  </div>
-                  <div className="text-center p-3 bg-slate-50 rounded-xl">
-                    <p className="text-2xl font-bold text-slate-900">{franchise.courses}</p>
-                    <p className="text-xs text-slate-600">Courses</p>
-                  </div>
-                  <div className="text-center p-3 bg-slate-50 rounded-xl">
-                    <p className="text-xl font-bold text-slate-900">⭐{franchise.rating}</p>
-                    <p className="text-xs text-slate-600">Rating</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Revenue */}
-              {franchise.status !== 'pending' && (
-                <div className="p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl mb-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-emerald-700">Total Revenue</span>
-                    <span className="text-2xl font-bold text-emerald-900">₹{(franchise.revenue / 100000).toFixed(1)}L</span>
-                  </div>
-                </div>
-              )}
-
               {/* Actions */}
-              {franchise.status === 'pending' ? (
-                <div className="flex gap-2">
-                  <button className="flex-1 px-4 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-semibold rounded-xl transition-colors">
-                    <CheckCircle size={16} className="inline mr-2" />
-                    Approve
-                  </button>
-                  <button className="flex-1 px-4 py-3 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-xl transition-colors">
-                    <XCircle size={16} className="inline mr-2" />
-                    Reject
-                  </button>
-                </div>
-              ) : (
-                <div className="flex gap-2">
-                  <button 
-                    onClick={() => navigate(`/portal/admin/franchises/${franchise.id}`)}
-                    className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Eye size={16} />
-                    View Details
-                  </button>
-                  <button className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors">
-                    <Edit size={16} />
-                  </button>
-                  <button className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors">
-                    <MoreVertical size={16} />
-                  </button>
-                </div>
-              )}
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => navigate(`/portal/admin/franchises/${franchise._id}`)}
+                  className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                >
+                  <Eye size={16} />
+                  View Details
+                </button>
+                <button className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-colors">
+                  <Edit size={16} />
+                </button>
+              </div>
             </div>
           </motion.div>
         ))}
@@ -318,6 +248,128 @@ const FranchiseManagement = () => {
           <p className="text-slate-600">Try adjusting your search or filter criteria</p>
         </motion.div>
       )}
+
+      {/* Add Franchisee Modal */}
+      <AnimatePresence>
+        {showAddModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[85vh] overflow-hidden flex flex-col"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-4 flex items-center justify-between text-white">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-white/20 rounded-lg">
+                    <Building2 className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Add New Franchisee</h2>
+                    <p className="text-sm text-blue-100">Create franchisee account</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowAddModal(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <form onSubmit={handleAddFranchise} className="flex-1 overflow-y-auto">
+                <div className="p-6 space-y-4">
+                  {/* Name */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Full Name <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="e.g., John Doe"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Email Address <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="franchisee@example.com"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  {/* Password */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Password <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      required
+                      placeholder="Minimum 6 characters"
+                      minLength="6"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Password will be sent to the franchisee</p>
+                  </div>
+
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Note:</strong> The franchisee will receive an email with login credentials. They can change their password after first login.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Modal Footer */}
+                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 px-6 pb-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowAddModal(false)}
+                    className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={formLoading}
+                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-lg shadow-blue-600/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {formLoading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-5 h-5" />
+                        Create Franchisee
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
