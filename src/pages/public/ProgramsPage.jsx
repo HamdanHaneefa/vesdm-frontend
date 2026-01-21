@@ -1,24 +1,57 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Filter, Clock, Award, CheckCircle } from 'lucide-react';
+import { Search, Filter, Clock, Award, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
 import Badge from '../../components/Badge';
-import { programCategories, programs } from '../../data/programsData';
+import apiClient from '../../api/apiClient';
 import { generateSlug } from '../../utils/helpers';
 import SEO from '../../components/SEO';
 
 const ProgramsPage = () => {
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredPrograms = programs.filter(program => {
-    const matchesCategory = selectedCategory === 'all' || program.category === selectedCategory;
-    const matchesSearch = program.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         program.description.toLowerCase().includes(searchQuery.toLowerCase());
+  // Default placeholder image
+  const DEFAULT_IMAGE = 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=600&fit=crop';
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiClient.get('/courses');
+      setCourses(response.data);
+    } catch (err) {
+      console.error('Error fetching courses:', err);
+      setError('Failed to load programs. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Get unique course types for categories
+  const categories = courses.length > 0 
+    ? [...new Set(courses.map(course => course.type))].map(type => ({
+        id: type.toLowerCase().replace(/\s+/g, '-'),
+        name: type
+      }))
+    : [];
+
+  const filteredPrograms = courses.filter(course => {
+    const matchesCategory = selectedCategory === 'all' || 
+                           course.type.toLowerCase().replace(/\s+/g, '-') === selectedCategory;
+    const matchesSearch = course.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         (course.description && course.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
@@ -44,7 +77,7 @@ const ProgramsPage = () => {
               Explore Our Programs
             </h1>
             <p className="text-xl text-blue-100 mb-8">
-              Choose from {programs.length}+ industry-aligned courses designed to accelerate your career growth
+              {loading ? 'Loading programs...' : `Choose from ${courses.length}+ industry-aligned courses designed to accelerate your career growth`}
             </p>
           </motion.div>
         </div>
@@ -67,30 +100,32 @@ const ProgramsPage = () => {
             </div>
 
             {/* Category Filters */}
-            <div className="flex gap-2 overflow-x-auto pb-2 lg:pb-0 w-full lg:w-auto">
-              <button
-                onClick={() => setSelectedCategory('all')}
-                className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
-                  selectedCategory === 'all'
-                    ? 'bg-[#007ACC] text-white'
-                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                }`}
-              >
-                All Programs
-              </button>
-              {programCategories.map((category) => (
+            <div className="w-full lg:flex-1 overflow-x-auto">
+              <div className="flex gap-2 pb-2 lg:pb-0 min-w-max">
                 <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
+                  onClick={() => setSelectedCategory('all')}
                   className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
-                    selectedCategory === category.id
+                    selectedCategory === 'all'
                       ? 'bg-[#007ACC] text-white'
                       : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                   }`}
                 >
-                  {category.name}
+                  All Programs
                 </button>
-              ))}
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all ${
+                      selectedCategory === category.id
+                        ? 'bg-[#007ACC] text-white'
+                        : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -103,7 +138,21 @@ const ProgramsPage = () => {
       {/* Programs Grid */}
       <section className="py-16 bg-slate-50">
         <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-12">
-          {filteredPrograms.length === 0 ? (
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <Loader2 className="w-12 h-12 text-[#007ACC] animate-spin mb-4" />
+              <p className="text-slate-600 text-lg">Loading programs...</p>
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">Error Loading Programs</h3>
+              <p className="text-slate-600 mb-6">{error}</p>
+              <Button onClick={fetchCourses}>
+                Try Again
+              </Button>
+            </div>
+          ) : filteredPrograms.length === 0 ? (
             <div className="text-center py-20">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-200 rounded-full mb-4">
                 <Search size={40} className="text-slate-400" />
@@ -118,7 +167,7 @@ const ProgramsPage = () => {
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredPrograms.map((program, i) => (
                 <motion.div
-                  key={program.id}
+                  key={program._id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
@@ -126,12 +175,12 @@ const ProgramsPage = () => {
                   <Card hover className="h-full flex flex-col">
                     <div className="relative h-48 -m-6 mb-4 rounded-t-2xl overflow-hidden">
                       <img
-                        src={program.image}
+                        src={DEFAULT_IMAGE}
                         alt={program.name}
                         className="w-full h-full object-cover"
                       />
                       <div className="absolute top-4 right-4">
-                        <Badge variant="primary">{program.level}</Badge>
+                        <Badge variant="primary">{program.type}</Badge>
                       </div>
                     </div>
 
@@ -139,38 +188,35 @@ const ProgramsPage = () => {
                       <h3 className="text-xl font-bold text-slate-900 mb-2 line-clamp-2">
                         {program.name}
                       </h3>
-                      <p className="text-sm text-slate-600 mb-4 line-clamp-2">
-                        {program.description}
+                      <p className="text-sm text-slate-600 mb-4 line-clamp-3">
+                        {program.description || 'No description available'}
                       </p>
 
-                      <div className="flex items-center gap-4 text-sm text-slate-600 mb-4">
-                        <div className="flex items-center gap-1">
-                          <Clock size={16} />
-                          <span>{program.duration}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Award size={16} />
-                          <span>{program.eligibility}</span>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 mb-4">
-                        {program.skills.slice(0, 3).map((skill, i) => (
-                          <Badge key={i} variant="default" size="sm">
-                            {skill}
-                          </Badge>
-                        ))}
-                        {program.skills.length > 3 && (
-                          <Badge variant="default" size="sm">
-                            +{program.skills.length - 3}
-                          </Badge>
+                      <div className="flex items-center gap-4 text-sm text-slate-600 mb-4 flex-wrap">
+                        {program.duration && (
+                          <div className="flex items-center gap-1">
+                            <Clock size={16} />
+                            <span>{program.duration}</span>
+                          </div>
+                        )}
+                        {program.eligibility && (
+                          <div className="flex items-center gap-1">
+                            <Award size={16} />
+                            <span>{program.eligibility}</span>
+                          </div>
                         )}
                       </div>
 
                       <div className="mt-auto pt-4 border-t border-slate-200 flex items-center justify-between">
                         <div>
-                          <p className="text-xs text-slate-500">Starting at</p>
-                          <p className="text-2xl font-bold text-[#007ACC]">{program.fees}</p>
+                          {program.fee ? (
+                            <>
+                              <p className="text-xs text-slate-500">Starting at</p>
+                              <p className="text-2xl font-bold text-[#007ACC]">₹{program.fee.toLocaleString()}</p>
+                            </>
+                          ) : (
+                            <p className="text-sm text-slate-500">Contact for pricing</p>
+                          )}
                         </div>
                         <Link to={`/programs/${generateSlug(program.name)}`}>
                           <Button size="sm">

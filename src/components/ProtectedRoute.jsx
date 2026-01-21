@@ -24,7 +24,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   if (allowedRoles && !hasRole(allowedRoles)) {
     // User is logged in but accessing wrong portal
     // Redirect to their actual portal
-    return <Navigate to={`/portal/${user.role}`} replace />;
+    // Map 'franchisee' role to 'franchise' route
+    const portalPath = user.role === 'franchisee' ? 'franchise' : user.role;
+    console.log('🔍 ProtectedRoute: Wrong portal redirect', { role: user.role, portalPath, allowedRoles });
+    return <Navigate to={`/portal/${portalPath}`} replace />;
   }
 
   // All checks passed - render the protected content

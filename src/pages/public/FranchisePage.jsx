@@ -1,12 +1,55 @@
-import { motion } from 'framer-motion';
-import { TrendingUp, Users, BookOpen, DollarSign, Award, Headphones, ChevronRight, FileText, Download, CheckCircle, Target, Zap, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { TrendingUp, Users, BookOpen, DollarSign, Award, Headphones, ChevronRight, FileText, Download, CheckCircle, Target, Zap, Shield, X, Loader2 } from 'lucide-react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
 import SEO from '../../components/SEO';
+import apiClient from '../../api/apiClient';
 
 const FranchisePage = () => {
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      await apiClient.post('/inquiries', {
+        ...formData,
+        type: 'franchise',
+      });
+      setSubmitSuccess(true);
+      setFormData({ name: '', email: '', phone: '', message: '' });
+      setTimeout(() => {
+        setShowApplicationModal(false);
+        setSubmitSuccess(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Error submitting franchise application:', error);
+      setSubmitError(error.response?.data?.msg || 'Failed to submit application. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const benefits = [
     {
       icon: Award,
@@ -102,11 +145,15 @@ const FranchisePage = () => {
                 Join India's fastest-growing vocational education network. Build a profitable business while transforming lives through quality education.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Button variant="secondary" size="lg" icon={Download}>
-                  Download Brochure
-                </Button>
+                <button
+                  onClick={() => setShowApplicationModal(true)}
+                  className="px-6 py-3 bg-white text-[#007ACC] rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
+                >
+                  <FileText className="w-5 h-5" />
+                  Apply for Franchise
+                </button>
                 <Button variant="outline" size="lg" className="!text-white border-white hover:bg-white hover:!text-[#007ACC]">
-                  Schedule Meeting
+                  Download Brochure
                 </Button>
               </div>
             </motion.div>
@@ -296,9 +343,13 @@ const FranchisePage = () => {
             Join 50+ successful franchise partners across India. Limited territories available.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Button variant="secondary" size="lg" icon={FileText}>
+            <button
+              onClick={() => setShowApplicationModal(true)}
+              className="px-6 py-3 bg-white text-[#007ACC] rounded-lg font-semibold hover:bg-blue-50 transition-colors flex items-center gap-2"
+            >
+              <FileText className="w-5 h-5" />
               Apply for Franchise
-            </Button>
+            </button>
             <Button variant="outline" size="lg" className="!text-white border-white hover:bg-white hover:!text-[#007ACC]" icon={Headphones}>
               Talk to Franchise Expert
             </Button>
@@ -308,6 +359,147 @@ const FranchisePage = () => {
           </p>
         </div>
       </section>
+
+      {/* Franchise Application Modal */}
+      <AnimatePresence>
+        {showApplicationModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            >
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gradient-to-r from-[#007ACC] to-[#0F172A] text-white p-6 flex items-center justify-between rounded-t-2xl">
+                <div>
+                  <h2 className="text-2xl font-bold">Franchise Application</h2>
+                  <p className="text-blue-100 text-sm mt-1">Join the VESDM family today</p>
+                </div>
+                <button
+                  onClick={() => setShowApplicationModal(false)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6">
+                {submitSuccess ? (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">Application Submitted!</h3>
+                    <p className="text-gray-600">Thank you for your interest. Our team will contact you shortly.</p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    {submitError && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        {submitError}
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Full Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007ACC] focus:border-transparent"
+                        placeholder="Enter your full name"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Email Address <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007ACC] focus:border-transparent"
+                        placeholder="your.email@example.com"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007ACC] focus:border-transparent"
+                        placeholder="+91 98765 43210"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Tell us about your interest <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        name="message"
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        required
+                        rows="4"
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#007ACC] focus:border-transparent resize-none"
+                        placeholder="Tell us about your location, expected investment, and why you want to become a VESDM franchise partner..."
+                      />
+                    </div>
+
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <p className="text-sm text-blue-800">
+                        <strong>Next Steps:</strong> After submission, our franchise team will review your application and contact you within 2-3 business days to discuss the next steps.
+                      </p>
+                    </div>
+
+                    <div className="flex gap-3 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowApplicationModal(false)}
+                        className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex-1 px-6 py-3 bg-[#007ACC] text-white rounded-lg font-medium hover:bg-[#006BB3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <FileText className="w-5 h-5" />
+                            Submit Application
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <Footer />
     </div>

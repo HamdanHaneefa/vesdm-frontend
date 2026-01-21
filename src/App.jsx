@@ -146,9 +146,9 @@ function App() {
                     <Route path="courses" element={<CourseManagement />} />
                     <Route path="courses/:courseId" element={<CourseDetails />} />
                     <Route path="register-student" element={<RegisterStudent />} />
+                    <Route path="students" element={<StudentsList />} />
                     <Route path="register-exam" element={<RegisterExam />} />
                     <Route path="publish-results" element={<PublishResults />} />
-                    <Route path="students" element={<StudentsList />} />
                     <Route path="resources" element={<FranchiseResources />} />
                   </Route>
 
@@ -168,13 +168,14 @@ function App() {
                     <Route path="students" element={<AdminStudentManagement />} />
                     <Route path="courses" element={<AdminCourseManagement />} />
                     <Route path="requests" element={<FranchiseRequests />} />
-                    <Route path="certificates" element={<CertificatesAdmin />} />
-                    <Route path="results" element={<PlaceholderPage />} />
-                    <Route path="analytics" element={<PlaceholderPage />} />
-                    <Route path="content" element={<PlaceholderPage />} />
-                    <Route path="financial" element={<PlaceholderPage />} />
-                    <Route path="communications" element={<PlaceholderPage />} />
-                    <Route path="settings" element={<PlaceholderPage />} />
+                    {/* Disabled features - Coming soon */}
+                    {/* <Route path="certificates" element={<CertificatesAdmin />} /> */}
+                    {/* <Route path="results" element={<PlaceholderPage />} /> */}
+                    {/* <Route path="analytics" element={<PlaceholderPage />} /> */}
+                    {/* <Route path="content" element={<PlaceholderPage />} /> */}
+                    {/* <Route path="financial" element={<PlaceholderPage />} /> */}
+                    {/* <Route path="communications" element={<PlaceholderPage />} /> */}
+                    {/* <Route path="settings" element={<PlaceholderPage />} /> */}
                   </Route>
 
                   {/* Fallback */}

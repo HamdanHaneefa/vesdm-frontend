@@ -31,7 +31,9 @@ const LoginPage = () => {
   // Redirect if already logged in
   useEffect(() => {
     if (!loading && isAuthenticated() && user) {
-      navigate(`/portal/${user.role}`, { replace: true });
+      const portalPath = user.role === 'franchisee' ? 'franchise' : user.role;
+      console.log('🔍 LoginPage: Redirecting logged-in user', { role: user.role, portalPath });
+      navigate(`/portal/${portalPath}`, { replace: true });
     }
   }, [loading, isAuthenticated, user, navigate]);
 
@@ -75,7 +77,10 @@ const LoginPage = () => {
       login(token, user);
 
       // Navigate to the appropriate portal based on user role
-      navigate(`/portal/${user.role}`, { replace: true });
+      // Map 'franchisee' role to 'franchise' route
+      const portalPath = user.role === 'franchisee' ? 'franchise' : user.role;
+      console.log('🔍 LoginPage: After login redirect', { role: user.role, portalPath });
+      navigate(`/portal/${portalPath}`, { replace: true });
     } catch (err) {
       console.error('Login error:', err);
       setError(
@@ -201,25 +206,6 @@ const LoginPage = () => {
             onSubmit={handleSubmit}
             className="space-y-5"
           >
-<<<<<<< HEAD
-            {/* Portal Type Selection */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-2.5 uppercase tracking-wide">
-                Select Portal
-              </label>
-              <select
-                value={formData.role}
-                onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                className="w-full border-2 border-slate-200 px-4 py-3.5 rounded-xl outline-none focus:border-[#007ACC] focus:ring-4 focus:ring-blue-50 transition-all bg-white text-slate-900 font-medium"
-              >
-                <option value="student">Student Portal</option>
-                <option value="franchise">Franchise Portal</option>
-                <option value="admin">Admin Portal</option>
-              </select>
-            </div>
-
-=======
->>>>>>> 3a4cb86 (Connect authentication backend)
             {/* Email/Username */}
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-2.5 uppercase tracking-wide">

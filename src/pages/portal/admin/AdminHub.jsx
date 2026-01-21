@@ -37,13 +37,14 @@ const AdminHub = () => {
     { id: 'students', label: 'Student Management', icon: Users, path: '/portal/admin/students' },
     { id: 'courses', label: 'Course Management', icon: BookOpen, path: '/portal/admin/courses' },
     { id: 'requests', label: 'Franchise Requests', icon: ClipboardCheck, path: '/portal/admin/requests' },
-    { id: 'certificates', label: 'Certificates', icon: Award, path: '/portal/admin/certificates' },
-    { id: 'results', label: 'Results Management', icon: FileText, path: '/portal/admin/results' },
-    { id: 'analytics', label: 'Analytics & Reports', icon: TrendingUp, path: '/portal/admin/analytics' },
-    { id: 'content', label: 'Website Content', icon: Database, path: '/portal/admin/content' },
-    { id: 'financial', label: 'Financial Overview', icon: DollarSign, path: '/portal/admin/financial' },
-    { id: 'communications', label: 'Communications', icon: MessageSquare, path: '/portal/admin/communications' },
-    { id: 'settings', label: 'Settings', icon: Settings, path: '/portal/admin/settings' },
+    // Disabled features - Coming soon
+    // { id: 'certificates', label: 'Certificates', icon: Award, path: '/portal/admin/certificates' },
+    // { id: 'results', label: 'Results Management', icon: FileText, path: '/portal/admin/results' },
+    // { id: 'analytics', label: 'Analytics & Reports', icon: TrendingUp, path: '/portal/admin/analytics' },
+    // { id: 'content', label: 'Website Content', icon: Database, path: '/portal/admin/content' },
+    // { id: 'financial', label: 'Financial Overview', icon: DollarSign, path: '/portal/admin/financial' },
+    // { id: 'communications', label: 'Communications', icon: MessageSquare, path: '/portal/admin/communications' },
+    // { id: 'settings', label: 'Settings', icon: Settings, path: '/portal/admin/settings' },
   ];
 
   const handleLogout = () => {
