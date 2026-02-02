@@ -45,7 +45,7 @@ const FranchiseHub = () => {
     { id: 'register-exam', label: 'Register Exam', icon: ClipboardList, path: '/portal/franchise/register-exam' },
     { id: 'publish-results', label: 'Publish Results', icon: FileUp, path: '/portal/franchise/publish-results' },
     { id: 'students', label: 'Students List', icon: Users, path: '/portal/franchise/students' },
-    { id: 'resources', label: 'Resources', icon: Book, path: '/portal/franchise/resources' },
+    // { id: 'resources', label: 'Resources', icon: Book, path: '/portal/franchise/resources' },
   ];
 
   const handleLogout = () => {

@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Building2, Users, BookOpen, FileText, Settings,
   LogOut, Menu, X, Bell, ChevronRight, Shield, Home, ClipboardCheck,
-  TrendingUp, Database, Award, MessageSquare, DollarSign
+  TrendingUp, Database, Award, MessageSquare, DollarSign,
+  Book
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -33,10 +34,13 @@ const AdminHub = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/portal/admin/dashboard' },
+    { id: 'admissions', label: 'Admissions Management', icon: Users, path: '/portal/admin/admissions' },
     { id: 'franchises', label: 'Franchise Management', icon: Building2, path: '/portal/admin/franchises' },
     { id: 'students', label: 'Student Management', icon: Users, path: '/portal/admin/students' },
     { id: 'courses', label: 'Course Management', icon: BookOpen, path: '/portal/admin/courses' },
     { id: 'requests', label: 'Franchise Requests', icon: ClipboardCheck, path: '/portal/admin/requests' },
+    { id: 'resources', label: 'Resources', icon: Book, path: '/portal/admin/resources' },
+
     // Disabled features - Coming soon
     // { id: 'certificates', label: 'Certificates', icon: Award, path: '/portal/admin/certificates' },
     // { id: 'results', label: 'Results Management', icon: FileText, path: '/portal/admin/results' },

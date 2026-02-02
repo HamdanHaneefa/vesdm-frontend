@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, ArrowRight, ArrowLeft, FileText, Upload, CreditCard, CheckSquare, Calendar, GraduationCap, BookOpen, Users, Award } from 'lucide-react';
 import Header from '../../components/Header';
@@ -7,30 +7,86 @@ import Button from '../../components/Button';
 import Input from '../../components/Input';
 import Card from '../../components/Card';
 import SEO from '../../components/SEO';
+import apiClient from '../../api/apiClient';
 
 const AdmissionsPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [courses, setCourses] = useState([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+
   const [formData, setFormData] = useState({
-    // Personal Info
     fullName: '',
     email: '',
     phone: '',
     dob: '',
-    // Academic Info
     qualification: '',
     institution: '',
     yearOfPassing: '',
     percentage: '',
-    // Program Selection
-    program: '',
+    course: '',
     studyMode: 'online',
     startDate: '',
-    // Documents (mock)
-    documentsUploaded: false,
   });
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const res = await apiClient.get('/courses');
+        setCourses(res.data);
+      } catch (err) {
+        console.error('Failed to load courses', err);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+    fetchCourses();
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    setSubmitError('');
+    try {
+      await apiClient.post('/admissions', formData);
+      setSubmitSuccess(true);
+    } catch (err) {
+      setSubmitError('Failed to submit application. Please try again later.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setSubmitSuccess(false);
+    setSubmitError('');
+    setFormData({
+      fullName: '',
+      email: '',
+      phone: '',
+      dob: '',
+      qualification: '',
+      institution: '',
+      yearOfPassing: '',
+      percentage: '',
+      course: '',
+      studyMode: 'online',
+      startDate: '',
+    });
+    setCurrentStep(1);
+  };
+
+  const nextStep = () => {
+    if (currentStep < 5) setCurrentStep(currentStep + 1);
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) setCurrentStep(currentStep - 1);
   };
 
   const steps = [
@@ -64,17 +120,14 @@ const AdmissionsPage = () => {
     { category: 'Advanced Programs', fee: '₹50,000 - ₹1,00,000', duration: '1-2 Years', emi: 'Available' },
   ];
 
-  const nextStep = () => {
-    if (currentStep < 5) setCurrentStep(currentStep + 1);
-  };
+  const selectedCourse = courses.find(c => c._id === formData.course);
+  const courseDisplay = selectedCourse 
+    ? `${selectedCourse.name}${selectedCourse.type ? ` - ${selectedCourse.type}` : ''}`
+    : 'Not selected';
 
-  const prevStep = () => {
-    if (currentStep > 1) setCurrentStep(currentStep - 1);
-  };
-
-  const handleSubmit = () => {
-    alert('Application submitted successfully! You will receive a confirmation email shortly.');
-  };
+  const studyModeDisplay = formData.studyMode 
+    ? formData.studyMode.charAt(0).toUpperCase() + formData.studyMode.slice(1)
+    : 'Online';
 
   return (
     <div className="min-h-screen bg-white">
@@ -262,9 +315,9 @@ const AdmissionsPage = () => {
                       </span>
                     </div>
                     {i < steps.length - 1 && (
-                      <div className={`absolute top-7 left-1/2 w-full h-0.5 ${
-                        currentStep > step.id ? 'bg-emerald-500' : 'bg-slate-200'
-                      }`} />
+                      <div className={`absolute top-7 left-1/2 w-full h-0.5 translate-x-1/2 ${
+                        currentStep > step.id + 1 ? 'bg-emerald-500' : 'bg-slate-200'
+                      }`} style={{ left: '50%' }} />
                     )}
                   </div>
                 );
@@ -322,13 +375,22 @@ const AdmissionsPage = () => {
                   <h3 className="text-2xl font-bold text-slate-900 mb-6">Program Selection</h3>
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Choose Program</label>
-                    <select name="program" value={formData.program} onChange={handleChange} required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#007ACC] focus:ring-2 focus:ring-[#007ACC]/20">
+                    <select
+                      name="course"
+                      value={formData.course}
+                      onChange={handleChange}
+                      required
+                      disabled={loadingCourses}
+                      className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-[#007ACC] focus:ring-2 focus:ring-[#007ACC]/20"
+                    >
                       <option value="">Select a program</option>
-                      <option value="diploma-cs">Diploma in Computer Science</option>
-                      <option value="diploma-dm">Diploma in Digital Marketing</option>
-                      <option value="degree-bca">BCA - Bachelor of Computer Applications</option>
-                      <option value="cert-web">Certificate in Web Development</option>
+                      {courses.map((c) => (
+                        <option key={c._id} value={c._id}>
+                          {c.name} {c.type ? ` - ${c.type}` : ''}
+                        </option>
+                      ))}
                     </select>
+                    {loadingCourses && <p className="text-sm text-slate-500 mt-2">Loading programs...</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-slate-700 mb-2 uppercase tracking-wide">Study Mode</label>
@@ -370,6 +432,7 @@ const AdmissionsPage = () => {
                   <div className="bg-blue-50 p-4 rounded-xl">
                     <p className="text-sm text-slate-600">• Accepted formats: PDF, JPG, PNG (Max 5MB)</p>
                     <p className="text-sm text-slate-600">• Ensure documents are clear and readable</p>
+                    <p className="text-sm text-slate-600 mt-2">* Note: Upload functionality is simulated. Documents will be collected after initial submission.</p>
                   </div>
                 </motion.div>
               )}
@@ -380,37 +443,122 @@ const AdmissionsPage = () => {
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
+                  className="space-y-8"
                 >
-                  <h3 className="text-2xl font-bold text-slate-900 mb-6">Review & Submit</h3>
-                  <div className="space-y-6">
-                    <div className="bg-slate-50 p-6 rounded-xl space-y-3">
-                      <div className="flex justify-between"><span className="font-medium">Name:</span><span>{formData.fullName || 'Not provided'}</span></div>
-                      <div className="flex justify-between"><span className="font-medium">Email:</span><span>{formData.email || 'Not provided'}</span></div>
-                      <div className="flex justify-between"><span className="font-medium">Qualification:</span><span>{formData.qualification || 'Not provided'}</span></div>
-                      <div className="flex justify-between"><span className="font-medium">Program:</span><span>{formData.program || 'Not selected'}</span></div>
+                  {submitSuccess ? (
+                    <div className="py-12 text-center">
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 200 }}
+                        className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-8"
+                      >
+                        <CheckCircle className="w-12 h-12 text-emerald-600" />
+                      </motion.div>
+                      <h3 className="text-3xl font-bold text-slate-900 mb-4">
+                        Application Submitted Successfully!
+                      </h3>
+                      <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+                        Thank you{formData.fullName ? `, ${formData.fullName}` : ''}. We have received your application and will review it shortly. You will receive a confirmation email soon.
+                      </p>
                     </div>
-                    <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl">
-                      <CheckCircle size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-sm text-slate-700">By submitting, you agree to our terms and conditions. You'll receive a confirmation email within 24 hours.</p>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <h3 className="text-2xl font-bold text-slate-900">Review Your Application</h3>
+
+                      <div className="space-y-8">
+                        {/* Personal Information */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-slate-900 mb-4">Personal Information</h4>
+                          <div className="bg-slate-50 p-6 rounded-xl space-y-3">
+                            <div className="flex justify-between"><span className="font-medium">Full Name:</span><span>{formData.fullName || 'Not provided'}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Email:</span><span>{formData.email || 'Not provided'}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Phone:</span><span>{formData.phone || 'Not provided'}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Date of Birth:</span><span>{formData.dob || 'Not provided'}</span></div>
+                          </div>
+                        </div>
+
+                        {/* Academic Details */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-slate-900 mb-4">Academic Details</h4>
+                          <div className="bg-slate-50 p-6 rounded-xl space-y-3">
+                            <div className="flex justify-between"><span className="font-medium">Highest Qualification:</span><span>{formData.qualification || 'Not provided'}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Institution:</span><span>{formData.institution || 'Not provided'}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Year of Passing:</span><span>{formData.yearOfPassing || 'Not provided'}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Percentage/CGPA:</span><span>{formData.percentage || 'Not provided'}</span></div>
+                          </div>
+                        </div>
+
+                        {/* Program Selection */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-slate-900 mb-4">Program Selection</h4>
+                          <div className="bg-slate-50 p-6 rounded-xl space-y-3">
+                            <div className="flex justify-between"><span className="font-medium">Program:</span><span>{courseDisplay}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Study Mode:</span><span>{studyModeDisplay}</span></div>
+                            <div className="flex justify-between"><span className="font-medium">Preferred Start Date:</span><span>{formData.startDate || 'Not provided'}</span></div>
+                          </div>
+                        </div>
+
+                        {/* Documents Note */}
+                        <div>
+                          <h4 className="text-lg font-semibold text-slate-900 mb-4">Documents</h4>
+                          <div className="bg-slate-50 p-6 rounded-xl">
+                            <p className="text-slate-600">Document uploads are simulated. Required documents will be verified after initial application review.</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {submitError && (
+                        <div className="mt-6 p-4 bg-red-50 text-red-700 rounded-xl">
+                          {submitError}
+                        </div>
+                      )}
+
+                      <div className="flex items-start gap-3 p-4 bg-emerald-50 rounded-xl">
+                        <CheckCircle size={20} className="text-emerald-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-slate-700">
+                          By submitting, you agree to our terms and conditions and privacy policy. You will receive a confirmation email within 24 hours.
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Navigation Buttons */}
             <div className="flex justify-between mt-8 pt-6 border-t border-slate-100">
-              <Button variant="outline" onClick={prevStep} disabled={currentStep === 1} icon={ArrowLeft}>
-                Previous
-              </Button>
-              {currentStep < 5 ? (
-                <Button onClick={nextStep} icon={ArrowRight} iconPosition="right">
-                  Next Step
-                </Button>
+              {submitSuccess ? (
+                <div className="w-full text-center">
+                  <Button onClick={resetForm} size="lg">
+                    Submit Another Application
+                  </Button>
+                </div>
               ) : (
-                <Button onClick={handleSubmit} icon={CheckCircle} iconPosition="right">
-                  Submit Application
-                </Button>
+                <>
+                  <Button 
+                    variant="outline" 
+                    onClick={prevStep} 
+                    disabled={currentStep === 1} 
+                    icon={ArrowLeft}
+                  >
+                    Previous
+                  </Button>
+                  {currentStep < 5 ? (
+                    <Button onClick={nextStep} icon={ArrowRight} iconPosition="right">
+                      Next Step
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={handleSubmit} 
+                      disabled={submitting} 
+                      icon={CheckCircle} 
+                      iconPosition="right"
+                    >
+                      {submitting ? 'Submitting...' : 'Submit Application'}
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           </Card>
