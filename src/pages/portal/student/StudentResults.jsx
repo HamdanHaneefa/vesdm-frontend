@@ -1,210 +1,172 @@
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Award, FileText, Download, BarChart3, Target } from 'lucide-react';
+import { FileText, Loader2, AlertCircle, GraduationCap } from 'lucide-react';
+import apiClient from '../../../api/apiClient';
 
 const StudentResults = () => {
-  const semesters = [
-    {
-      id: 1,
-      name: 'Semester 1',
-      year: '2025',
-      status: 'completed',
-      sgpa: 8.9,
-      totalMarks: 890,
-      maxMarks: 1000,
-      subjects: [
-        { code: 'CS101', name: 'Programming Fundamentals', marks: 92, maxMarks: 100, grade: 'A+' },
-        { code: 'CS102', name: 'Data Structures', marks: 88, maxMarks: 100, grade: 'A' },
-        { code: 'CS103', name: 'Database Management', marks: 85, maxMarks: 100, grade: 'A' },
-        { code: 'CS104', name: 'Web Technologies', marks: 90, maxMarks: 100, grade: 'A+' },
-        { code: 'CS105', name: 'Mathematics', marks: 82, maxMarks: 100, grade: 'B+' },
-        { code: 'CS106', name: 'Communication Skills', marks: 88, maxMarks: 100, grade: 'A' },
-        { code: 'CS107', name: 'Lab - Programming', marks: 95, maxMarks: 100, grade: 'A+' },
-        { code: 'CS108', name: 'Lab - Database', marks: 90, maxMarks: 100, grade: 'A+' },
-        { code: 'CS109', name: 'Seminar', marks: 45, maxMarks: 50, grade: 'A+' },
-        { code: 'CS110', name: 'Project', marks: 45, maxMarks: 50, grade: 'A+' },
-      ],
-    },
-    {
-      id: 2,
-      name: 'Semester 2',
-      year: '2026',
-      status: 'in-progress',
-      sgpa: null,
-      totalMarks: null,
-      maxMarks: 1000,
-      subjects: [
-        { code: 'CS201', name: 'Object Oriented Programming', marks: null, maxMarks: 100, grade: null },
-        { code: 'CS202', name: 'Computer Networks', marks: null, maxMarks: 100, grade: null },
-        { code: 'CS203', name: 'Operating Systems', marks: null, maxMarks: 100, grade: null },
-        { code: 'CS204', name: 'Software Engineering', marks: null, maxMarks: 100, grade: null },
-      ],
-    },
-  ];
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const overallStats = {
-    cgpa: 8.9,
-    totalCredits: 24,
-    completedSemesters: 1,
-    totalSemesters: 4,
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const resultsRes = await apiClient.get('/student/results');
+        setResults(resultsRes.data || []);
+        setError(null);
+      } catch (err) {
+        setError(err.response?.data?.msg || 'Failed to load results');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   const getGradeColor = (grade) => {
     if (!grade) return 'bg-slate-100 text-slate-600';
-    if (grade === 'A+' || grade === 'A') return 'bg-emerald-100 text-emerald-700';
-    if (grade === 'B+' || grade === 'B') return 'bg-blue-100 text-blue-700';
-    return 'bg-amber-100 text-amber-700';
+    const upper = grade.toUpperCase();
+    if (['A+', 'A'].includes(upper)) return 'bg-emerald-100 text-emerald-700';
+    if (['B+', 'B'].includes(upper)) return 'bg-blue-100 text-blue-700';
+    if (['C+', 'C'].includes(upper)) return 'bg-amber-100 text-amber-700';
+    return 'bg-rose-100 text-rose-700';
   };
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className="text-4xl font-bold text-slate-900 mb-2">Examination Results</h1>
-        <p className="text-slate-500 text-lg">View your academic performance and grades</p>
-      </motion.div>
+  // Group by course safely
+  const groupedResults = results.reduce((acc, result) => {
+    const course = result.course;
+    
+    // Logic to handle if course is an object or just an ID string
+    const courseId = course?._id || (typeof course === 'string' ? course : 'unknown');
+    const courseName = course?.name || 'General / Other';
 
-      {/* Overall Performance */}
-      <div className="grid md:grid-cols-4 gap-6">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-br from-[#007ACC] to-blue-600 rounded-2xl p-6 text-white shadow-xl"
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <Award size={28} />
-            </div>
-            <p className="text-sm font-semibold uppercase tracking-wider">Overall CGPA</p>
-          </div>
-          <p className="text-5xl font-bold">{overallStats.cgpa}</p>
-          <p className="text-blue-200 text-sm mt-2">Out of 10.0</p>
-        </motion.div>
+    if (!acc[courseId]) {
+      acc[courseId] = {
+        name: courseName,
+        results: []
+      };
+    }
+    acc[courseId].results.push(result);
+    return acc;
+  }, {});
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100"
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-              <FileText size={28} className="text-emerald-600" />
-            </div>
-            <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Total Credits</p>
-          </div>
-          <p className="text-4xl font-bold text-slate-900">{overallStats.totalCredits}</p>
-          <p className="text-slate-500 text-sm mt-2">Earned credits</p>
-        </motion.div>
+  const groups = Object.values(groupedResults).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  );
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100"
-        >
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-              <TrendingUp size={28} className="text-purple-600" />
-            </div>
-            <p className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Semesters</p>
-          </div>
-          <p className="text-4xl font-bold text-slate-900">{overallStats.completedSemesters}<span className="text-2xl text-slate-400">/{overallStats.totalSemesters}</span></p>
-          <p className="text-slate-500 text-sm mt-2">Completed</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100 flex items-center justify-center"
-        >
-          <button className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl transition-all shadow-lg shadow-blue-500/30 w-full justify-center">
-            <Download size={20} />
-            Report
-          </button>
-        </motion.div>
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="animate-spin text-purple-600 mb-4" size={48} />
+        <p className="text-slate-500 font-medium">Fetching your grades...</p>
       </div>
+    );
+  }
 
-      {/* Semester Results */}
-      <div className="space-y-6">
-        {semesters.map((semester, i) => (
-          <motion.div
-            key={semester.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.1 }}
-            className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden"
-          >
-            <div className="bg-gradient-to-r from-slate-50 to-slate-100 p-6 border-b border-slate-200">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900">{semester.name}</h2>
-                  <p className="text-slate-500">Academic Year {semester.year}</p>
-                </div>
-                <div className="flex items-center gap-4">
-                  {semester.sgpa && (
-                    <div className="bg-white rounded-xl px-6 py-3 shadow-sm">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">SGPA</p>
-                      <p className="text-3xl font-bold text-emerald-600">{semester.sgpa}</p>
-                    </div>
-                  )}
-                  {semester.totalMarks && (
-                    <div className="bg-white rounded-xl px-6 py-3 shadow-sm">
-                      <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Total Marks</p>
-                      <p className="text-3xl font-bold text-slate-900">{semester.totalMarks}<span className="text-lg text-slate-400">/{semester.maxMarks}</span></p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto mt-10 bg-rose-50 border-2 border-rose-200 rounded-xl p-6 flex items-center gap-3">
+        <AlertCircle size={24} className="text-rose-600" />
+        <p className="text-rose-800 font-semibold">{error}</p>
+      </div>
+    );
+  }
 
-            <div className="p-6">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b-2 border-slate-200">
-                      <th className="text-left py-3 px-4 text-sm font-bold text-slate-700 uppercase tracking-wide">Code</th>
-                      <th className="text-left py-3 px-4 text-sm font-bold text-slate-700 uppercase tracking-wide">Subject</th>
-                      <th className="text-center py-3 px-4 text-sm font-bold text-slate-700 uppercase tracking-wide">Marks</th>
-                      <th className="text-center py-3 px-4 text-sm font-bold text-slate-700 uppercase tracking-wide">Grade</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {semester.subjects.map((subject, idx) => (
-                      <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                        <td className="py-4 px-4">
-                          <span className="font-mono text-sm font-semibold text-slate-600">{subject.code}</span>
-                        </td>
-                        <td className="py-4 px-4">
-                          <span className="font-semibold text-slate-900">{subject.name}</span>
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          {subject.marks !== null ? (
-                            <span className="font-bold text-slate-900 text-lg">{subject.marks}<span className="text-sm text-slate-400">/{subject.maxMarks}</span></span>
-                          ) : (
-                            <span className="text-slate-400 italic">Pending</span>
-                          )}
-                        </td>
-                        <td className="py-4 px-4 text-center">
-                          {subject.grade ? (
-                            <span className={`px-4 py-1.5 rounded-full font-bold text-sm ${getGradeColor(subject.grade)}`}>
-                              {subject.grade}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400 italic">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+  return (
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
+      <div className="max-w-7xl mx-auto">
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-purple-600 rounded-lg text-white">
+              <GraduationCap size={24} />
             </div>
+            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Academic Performance</h1>
+          </div>
+          <p className="text-slate-600 text-lg">Detailed report of your examination results</p>
+        </motion.div>
+
+        {results.length === 0 ? (
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl p-16 text-center shadow-sm border border-slate-200">
+            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileText className="text-slate-300" size={40} />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">No Results Found</h3>
+            <p className="text-slate-500 max-w-sm mx-auto">Your results will be visible here once the administration publishes them.</p>
           </motion.div>
-        ))}
+        ) : (
+          <div className="space-y-10">
+            {groups.map((group, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden"
+              >
+                <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">{group.name}</h2>
+                    <p className="text-slate-400 text-sm">Course Curriculum Performance</p>
+                  </div>
+                  <div className="bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
+                    <span className="text-sm font-bold">{group.results.length} Exam Records</span>
+                  </div>
+                </div>
+
+                <div className="p-2 md:p-6">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-100">
+                          <th className="text-left py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Exam Subject</th>
+                          <th className="text-center py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Score</th>
+                          <th className="text-center py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Grade</th>
+                          <th className="text-right py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Date Published</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {group.results
+                          .sort((a, b) => new Date(b.publishedDate) - new Date(a.publishedDate))
+                          .map((result, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
+                              <td className="py-5 px-4">
+                                <p className="font-bold text-slate-800 group-hover:text-purple-600 transition-colors">{result.examName}</p>
+                                <p className="text-xs text-slate-400 font-medium uppercase">{result.subject}</p>
+                              </td>
+                              <td className="py-5 px-4 text-center">
+                                <span className="text-lg font-black text-slate-900">
+                                  {result.marks ?? 'N/A'}
+                                </span>
+                              </td>
+                              <td className="py-5 px-4 text-center">
+                                {result.grade ? (
+                                  <span className={`inline-block w-12 py-1 rounded-lg font-black text-sm shadow-sm ${getGradeColor(result.grade)}`}>
+                                    {result.grade}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-300">—</span>
+                                )}
+                              </td>
+                              <td className="py-5 px-4 text-right text-sm font-medium text-slate-500">
+                                {result.publishedDate
+                                  ? new Date(result.publishedDate).toLocaleDateString('en-GB', { 
+                                      day: '2-digit', 
+                                      month: 'short', 
+                                      year: 'numeric' 
+                                    })
+                                  : 'Pending'}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -23,7 +23,7 @@ const LoginPage = () => {
   const { login, isAuthenticated, user, loading } = useAuth();
   const infoSideRef = useRef(null);
 
-  const [formData, setFormData] = useState({ email: '', password: '' });
+  const [formData, setFormData] = useState({ email: 'franchisee@example.com', password: 'Adnan@123' });
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -292,11 +292,11 @@ const LoginPage = () => {
           </div>
 
           {/* Demo Credentials */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          {/* <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
             <p className="text-xs text-slate-600 mb-2 font-semibold">Demo Credentials:</p>
             <p className="text-xs text-slate-600">Email: <span className="font-mono font-semibold">admin@vesdm.com</span></p>
             <p className="text-xs text-slate-600">Password: <span className="font-mono font-semibold">admin123</span></p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

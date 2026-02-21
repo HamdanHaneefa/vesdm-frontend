@@ -19,7 +19,7 @@ function ScrollToTop() {
       window.scrollTo(0, 0);
       document.documentElement.scrollTop = 0;
       document.body.scrollTop = 0;
-      
+
       const portalContent = document.querySelector('.portal-content-scroll');
       if (portalContent) {
         portalContent.scrollTop = 0;
@@ -71,12 +71,14 @@ import StudentResources from './pages/portal/student/StudentResources';
 import FranchiseHub from './pages/portal/franchise/FranchiseHub';
 import FranchiseDashboard from './pages/portal/franchise/FranchiseDashboard';
 import CourseManagement from './pages/portal/franchise/CourseManagement';
-import CourseDetails from './pages/portal/franchise/CourseDetails';
+import CourseDetails from './pages/portal/admin/CourseDetails';
 import RegisterStudent from './pages/portal/franchise/RegisterStudent';
 import RegisterStudentsForExam from './pages/portal/franchise/RegisterStudentsForExam';
 import ViewExamResults from './pages/portal/franchise/ViewExamResults';
 import StudentsList from './pages/portal/franchise/StudentsList';
-import FranchiseResources from './pages/portal/franchise/FranchiseResources';
+import FranchiseResources from './pages/portal/admin/ResourceManagement';
+import RegisterForExam from './pages/portal/franchise/RegisterForExam';
+import PublishedExams from './pages/portal/franchise/PublishedExams';
 
 import AdminHub from './pages/portal/admin/AdminHub';
 import AdminDashboard from './pages/portal/admin/AdminDashboard';
@@ -84,6 +86,7 @@ import FranchiseManagement from './pages/portal/admin/FranchiseManagement';
 import FranchiseDetails from './pages/portal/admin/FranchiseDetails';
 import AdminCourseManagement from './pages/portal/admin/CourseManagement';
 import AdminStudentManagement from './pages/portal/admin/StudentManagement';
+import AdmissionManagement from './pages/portal/admin/AdmissionManagement';
 import FranchiseRequests from './pages/portal/admin/FranchiseRequests';
 import CertificatesAdmin from './pages/portal/admin/CertificatesAdmin';
 import CreateExam from './pages/portal/admin/CreateExam';
@@ -165,6 +168,7 @@ function App() {
                   >
                     <Route index element={<Navigate to="dashboard" replace />} />
                     <Route path="dashboard" element={<AdminDashboard />} />
+                    <Route path="admissions" element={<AdmissionManagement />} />
                     <Route path="franchises" element={<FranchiseManagement />} />
                     <Route path="franchises/:franchiseId" element={<FranchiseDetails />} />
                     <Route path="students" element={<AdminStudentManagement />} />
@@ -172,8 +176,9 @@ function App() {
                     <Route path="create-exam" element={<CreateExam />} />
                     <Route path="publish-results" element={<PublishExamResults />} />
                     <Route path="requests" element={<FranchiseRequests />} />
+                    <Route path="resources" element={<FranchiseResources />} />
                     {/* Disabled features - Coming soon */}
-                    {/* <Route path="certificates" element={<CertificatesAdmin />} /> */}
+                    <Route path="certificates" element={<CertificatesAdmin />} />
                     {/* <Route path="results" element={<PlaceholderPage />} /> */}
                     {/* <Route path="analytics" element={<PlaceholderPage />} /> */}
                     {/* <Route path="content" element={<PlaceholderPage />} /> */}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   Building2, Search, Filter, MapPin, Phone, Mail, Users, DollarSign,
   CheckCircle, XCircle, Edit, Eye, MoreVertical, TrendingUp, Calendar, Clock, Plus, X
 } from 'lucide-react';
@@ -18,8 +18,7 @@ const FranchiseManagement = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    email: '',
-    password: ''
+    email: ''
   });
   const [formLoading, setFormLoading] = useState(false);
 
@@ -48,13 +47,12 @@ const FranchiseManagement = () => {
     try {
       const response = await apiClient.post('/users', {
         name: formData.name,
-        email: formData.email,
-        password: formData.password
+        email: formData.email
       });
 
       await fetchFranchises();
       setShowAddModal(false);
-      setFormData({ name: '', email: '', password: '' });
+      setFormData({ name: '', email: ''});
       alert('Franchisee created successfully!');
     } catch (err) {
       console.error('Error creating franchisee:', err);
@@ -70,7 +68,7 @@ const FranchiseManagement = () => {
   };
 
   const filteredFranchises = franchises.filter(franchise => {
-    const matchesSearch = 
+    const matchesSearch =
       franchise.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       franchise.email?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || franchise.status === statusFilter;
@@ -81,11 +79,13 @@ const FranchiseManagement = () => {
     { label: 'Total Franchises', value: franchises.filter(f => f.role === 'franchisee').length, icon: Building2, color: 'blue' },
     { label: 'Active Users', value: franchises.length, icon: Users, color: 'emerald' },
     { label: 'Registered', value: franchises.length, icon: CheckCircle, color: 'purple' },
-    { label: 'This Month', value: franchises.filter(f => {
-      const created = new Date(f.createdAt);
-      const now = new Date();
-      return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-    }).length, icon: TrendingUp, color: 'amber' },
+    {
+      label: 'This Month', value: franchises.filter(f => {
+        const created = new Date(f.createdAt);
+        const now = new Date();
+        return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
+      }).length, icon: TrendingUp, color: 'amber'
+    },
   ];
 
   if (loading) {
@@ -165,11 +165,10 @@ const FranchiseManagement = () => {
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                  statusFilter === status
-                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                }`}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${statusFilter === status
+                  ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  }`}
               >
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </button>
@@ -220,7 +219,7 @@ const FranchiseManagement = () => {
 
               {/* Actions */}
               <div className="flex gap-2">
-                <button 
+                <button
                   onClick={() => navigate(`/portal/admin/franchises/${franchise._id}`)}
                   className="flex-1 px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                 >
@@ -314,7 +313,7 @@ const FranchiseManagement = () => {
                   </div>
 
                   {/* Password */}
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Password <span className="text-red-600">*</span>
                     </label>
@@ -329,7 +328,7 @@ const FranchiseManagement = () => {
                       className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <p className="text-xs text-gray-500 mt-1">Password will be sent to the franchisee</p>
-                  </div>
+                  </div> */}
 
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">

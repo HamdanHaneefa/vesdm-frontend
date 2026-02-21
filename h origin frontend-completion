@@ -1,0 +1,92 @@
+[33mcommit ad9592a0f75cab7645e67b338e2c05bc581b8c2f[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mfrontend-completion[m[33m)[m
+Author: AdnanHisham7 <a.hishamkk@gmail.com>
+Date:   Mon Feb 2 11:59:23 2026 +0530
+
+    Complete remaining frontend UI sections
+
+[33mcommit af9627fffb78aca7e0d976181630c34c5086ca18[m[33m ([m[1;31mupstream/main[m[33m, [m[1;31mupstream/HEAD[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Wed Jan 21 14:45:10 2026 +0530
+
+    Connect franchisee portal to backend
+
+[33mcommit 25d6cba103c0689376739700d9f61b22646581a3[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Wed Jan 21 10:23:15 2026 +0530
+
+    Connect authentication backend
+
+[33mcommit e5af088b60e0b15e47b3607c3656edc618210008[m[33m ([m[1;32mmain[m[33m)[m
+Merge: 05f57fb ee2d6cf
+Author: Hamdan <hamdanhaneefa23@gmail.com>
+Date:   Wed Jan 7 16:49:50 2026 +0530
+
+    Merge pull request #1 from HamdanHaneefa/agent-issues-to-admin-portal-routes-fa0f
+    
+    Fixing Access Issues to Admin Portal Routes
+
+[33mcommit ee2d6cf41770521fa3dcbd57ea0047255b3058cf[m[33m ([m[1;31mupstream/agent-issues-to-admin-portal-routes-fa0f[m[33m, [m[1;31morigin/agent-issues-to-admin-portal-routes-fa0f[m[33m)[m
+Author: netlify[bot] <noreply@netlify.com>
+Date:   Wed Jan 7 11:19:29 2026 +0000
+
+    Fixing Access Issues to Admin Portal Routes (695e40621878f400a1d5fa0f)
+
+[33mcommit 05f57fb9568547d58af9d0533fc157e405dc46a2[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Wed Jan 7 16:41:01 2026 +0530
+
+    delted public redirect page
+
+[33mcommit ca1389566d67ade850505e91bc9be834b0c722b2[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Wed Jan 7 16:23:50 2026 +0530
+
+    Add Render configuration for SPA routing
+
+[33mcommit ef257d68b0eba25533e8eac64fbdb476950017da[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Wed Jan 7 16:05:15 2026 +0530
+
+    Add redirects for SPA routing on Render
+
+[33mcommit 50c544b3ea961ee17dfbc2ed7f8e242a0e8d1350[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Wed Jan 7 15:56:55 2026 +0530
+
+    created admin portal
+
+[33mcommit 50e3b06c19904de9c687b7a53459c4b7c317d652[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Wed Jan 7 12:39:20 2026 +0530
+
+    added my course section on student portal
+
+[33mcommit bd6446c65e939b97cd91ba77da79cb1a3c3e82cf[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Tue Jan 6 12:27:41 2026 +0530
+
+    seo not defined fixed
+
+[33mcommit 4459801e0bd4c518bd858943e5912f93da33fd61[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Tue Jan 6 12:22:02 2026 +0530
+
+    react helmet issues fixed for hosting
+
+[33mcommit 50bfdd84e5a107ebac911ed08920f1b137e0db68[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Tue Jan 6 12:18:37 2026 +0530
+
+    franchise portal updated
+
+[33mcommit 193e3cdf1bb6d75384672a2e0fe7d27b86abb0d6[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Tue Jan 6 08:48:48 2026 +0530
+
+    completed the student portal complted
+
+[33mcommit 114b256e24c772c03a9e904273054d7bf748df1f[m
+Author: HamdanHaneefa <hamdanhaneefa23@gmail.com>
+Date:   Tue Jan 6 06:52:12 2026 +0530
+
+    initial commit

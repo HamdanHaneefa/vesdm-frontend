@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
+import {
   LayoutDashboard, UserPlus, ClipboardList, FileUp, Users, Book, BookOpen,
   LogOut, Menu, X, Bell, ChevronRight, Building2, Home, Calendar, Award
 } from 'lucide-react';
@@ -20,7 +20,7 @@ const FranchiseHub = () => {
     const scrollToTop = () => {
       // Scroll window
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-      
+
       // Scroll portal container
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = 0;
@@ -30,7 +30,7 @@ const FranchiseHub = () => {
 
     // Execute immediately
     scrollToTop();
-    
+
     // Execute again after a tick to catch any delayed renders
     requestAnimationFrame(() => {
       scrollToTop();
@@ -45,7 +45,7 @@ const FranchiseHub = () => {
     { id: 'apply-exam', label: 'Apply for Exam', icon: Calendar, path: '/portal/franchise/apply-exam' },
     { id: 'view-results', label: 'View Results', icon: Award, path: '/portal/franchise/view-results' },
     { id: 'students', label: 'Students List', icon: Users, path: '/portal/franchise/students' },
-    { id: 'resources', label: 'Resources', icon: Book, path: '/portal/franchise/resources' },
+    // { id: 'resources', label: 'Resources', icon: Book, path: '/portal/franchise/resources' },
   ];
 
   const handleLogout = () => {
@@ -103,15 +103,13 @@ const FranchiseHub = () => {
               <Link
                 key={item.id}
                 to={item.path}
-                className={`group flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 ${
-                  isActive
+                className={`group flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-200 ${isActive
                     ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg shadow-purple-500/30'
                     : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
-                }`}
+                  }`}
               >
-                <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${
-                  isActive ? 'bg-white/20' : 'bg-slate-100 group-hover:bg-slate-200'
-                }`}>
+                <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isActive ? 'bg-white/20' : 'bg-slate-100 group-hover:bg-slate-200'
+                  }`}>
                   <Icon size={20} className={isActive ? '' : 'text-slate-600'} />
                 </div>
                 <span className="font-semibold text-sm flex-1">{item.label}</span>
@@ -217,7 +215,7 @@ const FranchiseHub = () => {
                       <p className="text-xs text-purple-600">Franchise Portal</p>
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setShowMobileMenu(false)}
                     className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
                   >
@@ -258,11 +256,10 @@ const FranchiseHub = () => {
                         key={item.id}
                         to={item.path}
                         onClick={() => setShowMobileMenu(false)}
-                        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all ${
-                          isActive
+                        className={`flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all ${isActive
                             ? 'bg-gradient-to-r from-purple-600 to-purple-700 text-white'
                             : 'text-slate-600 hover:bg-slate-50'
-                        }`}
+                          }`}
                       >
                         <Icon size={20} />
                         <span className="font-semibold text-sm">{item.label}</span>

@@ -8,13 +8,12 @@ import { useAuth } from '../../../contexts/AuthContext';
 const RegisterStudent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -23,75 +22,49 @@ const RegisterStudent = () => {
     year: new Date().getFullYear()
   });
 
-  // Fetch courses on mount
   useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        setLoading(true);
+        const response = await apiClient.get('/courses');
+        setCourses(response.data);
+      } catch (err) {
+        console.error('Error fetching courses:', err);
+        setError('Failed to load courses');
+      } finally {
+        setLoading(false);
+      }
+    };
     fetchCourses();
   }, []);
 
-  // Pre-select course if passed from course management
-  useEffect(() => {
-    if (location.state?.selectedCourse) {
-      setFormData(prev => ({ ...prev, course: location.state.selectedCourse._id }));
-    }
-  }, [location.state]);
-
-  const fetchCourses = async () => {
-    try {
-      setLoading(true);
-      const response = await apiClient.get('/courses');
-      setCourses(response.data);
-    } catch (err) {
-      console.error('Error fetching courses:', err);
-      setError('Failed to load courses');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(''); // Clear error on change
+    setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validation
     if (!formData.name || !formData.course) {
       setError('Please fill in all required fields');
       return;
     }
-
     setSubmitting(true);
-    setError('');
-
     try {
-      const response = await apiClient.post('/students', {
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        course: formData.course,
-        year: formData.year,
-        franchisee: user._id // Backend will use this if user is franchisee
-      });
-
-      console.log('Student registered:', response.data);
+      // API Call
+      await apiClient.post('/students', formData);
       setSuccess(true);
-      
-      // Show success message for 2 seconds then navigate
-      setTimeout(() => {
-        navigate('/portal/franchise/students');
-      }, 2000);
+      setTimeout(() => navigate('/portal/franchise/students'), 2000);
     } catch (err) {
-      console.error('Error registering student:', err);
-      setError(err.response?.data?.msg || 'Failed to register student. Please try again.');
+      setError(err.response?.data?.msg || 'Failed to register student.');
     } finally {
       setSubmitting(false);
     }
   };
 
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-0 md:p-6">
       {/* Success Message */}
       {success && (
         <motion.div
@@ -123,6 +96,7 @@ const RegisterStudent = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        className='hidden md:block'
       >
         <h1 className="text-4xl font-bold text-slate-900 mb-2">Register New Student</h1>
         <p className="text-slate-500 text-lg">Enroll a new student in your franchise</p>
@@ -158,7 +132,7 @@ const RegisterStudent = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address</label>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Email Address <span className="text-red-600">*</span></label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
                 <input
@@ -266,6 +240,11 @@ const RegisterStudent = () => {
             </div>
           )}
         </motion.div>
+        <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+          <p className="text-sm text-blue-800">
+            <strong>Note:</strong> A temporary password will be automatically generated and emailed to the student along with login instructions. They should change it after first login.
+          </p>
+        </div>
 
         {/* Submit Button */}
         <motion.div

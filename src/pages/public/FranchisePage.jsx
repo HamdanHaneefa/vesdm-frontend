@@ -122,7 +122,7 @@ const FranchisePage = () => {
 
   return (
     <div className="min-h-screen bg-white">
-      <SEO 
+      <SEO
         title="Franchise Opportunities - Partner with VESDM | Vocational Education"
         description="Join VESDM's franchise network. Proven business model, comprehensive support, and growing demand for vocational education. Start your education franchise today."
         keywords="vesdm franchise, education franchise opportunity, vocational education franchise, business opportunity"
