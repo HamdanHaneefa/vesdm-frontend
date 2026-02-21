@@ -4,10 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, Building2, Users, BookOpen, FileText, Settings,
   LogOut, Menu, X, Bell, ChevronRight, Shield, Home, ClipboardCheck,
-  TrendingUp, Database, Award, MessageSquare, DollarSign,
-  Book,
-  FileCheck,
-  Calendar
+  TrendingUp, Database, Award, MessageSquare, DollarSign, Calendar, FileCheck
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 

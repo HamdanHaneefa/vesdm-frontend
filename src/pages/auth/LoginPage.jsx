@@ -32,7 +32,6 @@ const LoginPage = () => {
   useEffect(() => {
     if (!loading && isAuthenticated() && user) {
       const portalPath = user.role === 'franchisee' ? 'franchise' : user.role;
-      console.log('🔍 LoginPage: Redirecting logged-in user', { role: user.role, portalPath });
       navigate(`/portal/${portalPath}`, { replace: true });
     }
   }, [loading, isAuthenticated, user, navigate]);

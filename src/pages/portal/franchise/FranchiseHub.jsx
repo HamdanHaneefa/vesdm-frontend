@@ -3,7 +3,7 @@ import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, UserPlus, ClipboardList, FileUp, Users, Book, BookOpen,
-  LogOut, Menu, X, Bell, ChevronRight, Building2, Home
+  LogOut, Menu, X, Bell, ChevronRight, Building2, Home, Calendar, Award
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 
@@ -42,8 +42,8 @@ const FranchiseHub = () => {
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/portal/franchise/dashboard' },
     { id: 'courses', label: 'Course Management', icon: BookOpen, path: '/portal/franchise/courses' },
     { id: 'register-student', label: 'Register Student', icon: UserPlus, path: '/portal/franchise/register-student' },
-    { id: 'register-for-exam', label: 'Register for Exam', icon: ClipboardList, path: '/portal/franchise/register-for-exam' },
-    { id: 'published-exams', label: 'Published Exams', icon: FileUp, path: '/portal/franchise/published-exams' },
+    { id: 'apply-exam', label: 'Apply for Exam', icon: Calendar, path: '/portal/franchise/apply-exam' },
+    { id: 'view-results', label: 'View Results', icon: Award, path: '/portal/franchise/view-results' },
     { id: 'students', label: 'Students List', icon: Users, path: '/portal/franchise/students' },
     // { id: 'resources', label: 'Resources', icon: Book, path: '/portal/franchise/resources' },
   ];

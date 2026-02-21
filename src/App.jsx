@@ -73,7 +73,8 @@ import FranchiseDashboard from './pages/portal/franchise/FranchiseDashboard';
 import CourseManagement from './pages/portal/franchise/CourseManagement';
 import CourseDetails from './pages/portal/admin/CourseDetails';
 import RegisterStudent from './pages/portal/franchise/RegisterStudent';
-import PublishResults from './pages/portal/admin/PublishResults';
+import RegisterStudentsForExam from './pages/portal/franchise/RegisterStudentsForExam';
+import ViewExamResults from './pages/portal/franchise/ViewExamResults';
 import StudentsList from './pages/portal/franchise/StudentsList';
 import FranchiseResources from './pages/portal/admin/ResourceManagement';
 import RegisterForExam from './pages/portal/franchise/RegisterForExam';
@@ -89,6 +90,7 @@ import AdmissionManagement from './pages/portal/admin/AdmissionManagement';
 import FranchiseRequests from './pages/portal/admin/FranchiseRequests';
 import CertificatesAdmin from './pages/portal/admin/CertificatesAdmin';
 import CreateExam from './pages/portal/admin/CreateExam';
+import PublishExamResults from './pages/portal/admin/PublishExamResults';
 
 function App() {
   return (
@@ -149,9 +151,10 @@ function App() {
                     <Route path="courses" element={<CourseManagement />} />
                     <Route path="courses/:courseId" element={<CourseDetails />} />
                     <Route path="register-student" element={<RegisterStudent />} />
-                    <Route path="register-for-exam" element={<RegisterForExam />} />
-                    <Route path="published-exams" element={<PublishedExams />} />
+                    <Route path="apply-exam" element={<RegisterStudentsForExam />} />
+                    <Route path="view-results" element={<ViewExamResults />} />
                     <Route path="students" element={<StudentsList />} />
+                    <Route path="resources" element={<FranchiseResources />} />
                   </Route>
 
                   {/* Admin Portal - Protected */}
@@ -170,9 +173,8 @@ function App() {
                     <Route path="franchises/:franchiseId" element={<FranchiseDetails />} />
                     <Route path="students" element={<AdminStudentManagement />} />
                     <Route path="courses" element={<AdminCourseManagement />} />
-                    <Route path="courses/:courseId" element={<CourseDetails />} />
                     <Route path="create-exam" element={<CreateExam />} />
-                    <Route path="publish-results" element={<PublishResults />} />
+                    <Route path="publish-results" element={<PublishExamResults />} />
                     <Route path="requests" element={<FranchiseRequests />} />
                     <Route path="resources" element={<FranchiseResources />} />
                     {/* Disabled features - Coming soon */}
