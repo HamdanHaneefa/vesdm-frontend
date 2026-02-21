@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, Search, Plus, Edit, Trash2, Eye, EyeOff, Users, 
   DollarSign, Clock, Award, Calendar,
-  CheckCircle, XCircle, AlertCircle, FileText, X
+  CheckCircle, XCircle, AlertCircle, FileText, X, ExternalLink
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
 import LoadingSpinner from '../../../components/LoadingSpinner';
@@ -359,7 +359,12 @@ const CourseManagementAdmin = () => {
                     <BookOpen className="w-6 h-6 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">{course.name}</h3>
+                    <h3 
+                      className="text-xl font-bold text-gray-900 mb-2 cursor-pointer hover:text-red-600 transition-colors"
+                      onClick={() => navigate(`${course._id}`)}
+                    >
+                      {course.name}
+                    </h3>
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{course.description}</p>
                     <div className="flex flex-wrap items-center gap-2">
                       {getStatusBadge(course.status)}
@@ -421,24 +426,22 @@ const CourseManagementAdmin = () => {
               {/* Actions */}
               <div className="flex gap-2">
                 <button 
+                  onClick={() => navigate(`${course._id}`)}
+                  className="flex-1 px-4 py-2 bg-slate-900 text-white rounded-lg font-medium hover:bg-black transition-colors flex items-center justify-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  View Details
+                </button>
+                <button 
                   onClick={() => toggleVisibility(course._id)}
-                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
+                  className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center justify-center gap-2 ${
                     course.visibility === 'public'
                       ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
                       : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
                   }`}
+                  title={course.visibility === 'public' ? 'Hide from public' : 'Show to public'}
                 >
-                  {course.visibility === 'public' ? (
-                    <>
-                      <EyeOff className="w-4 h-4" />
-                      Hide from Public
-                    </>
-                  ) : (
-                    <>
-                      <Eye className="w-4 h-4" />
-                      Show to Public
-                    </>
-                  )}
+                  {course.visibility === 'public' ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
                 <button 
                   onClick={() => handleEditClick(course)}
@@ -468,7 +471,7 @@ const CourseManagementAdmin = () => {
         </div>
       )}
 
-      {/* Add Course Modal */}
+      {/* Add Course Modal (Simplified for brevity, same as yours) */}
       <AnimatePresence>
         {showAddModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
@@ -602,7 +605,7 @@ const CourseManagementAdmin = () => {
                 </div>
 
                 {/* Modal Footer */}
-                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200">
+                <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 px-6 pb-6">
                   <button
                     type="button"
                     onClick={() => setShowAddModal(false)}
@@ -634,7 +637,7 @@ const CourseManagementAdmin = () => {
         )}
       </AnimatePresence>
 
-      {/* Edit Course Modal */}
+      {/* Edit Course Modal (Simplified for brevity, same as yours) */}
       <AnimatePresence>
         {showEditModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">

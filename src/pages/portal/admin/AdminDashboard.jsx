@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { 
+import {
   Building2, Users, BookOpen, FileText
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
@@ -14,6 +15,8 @@ const AdminDashboard = () => {
     applications: 0
   });
 
+  const navigate = useNavigate()
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -21,7 +24,7 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch all data in parallel
       const [franchisesRes, studentsRes, coursesRes, applicationsRes] = await Promise.all([
         apiClient.get('/users'),
@@ -32,7 +35,7 @@ const AdminDashboard = () => {
 
       // Count franchisees (users with role='franchisee')
       const franchiseeCount = franchisesRes.data.filter(u => u.role === 'franchisee').length;
-      
+
       // Count franchise inquiries
       const franchiseInquiries = applicationsRes.data.filter(i => i.type === 'franchise').length;
 
@@ -50,31 +53,31 @@ const AdminDashboard = () => {
   };
 
   const statsCards = [
-    { 
-      label: 'Total Franchises', 
-      value: stats.franchises, 
-      icon: Building2, 
+    {
+      label: 'Total Franchises',
+      value: stats.franchises,
+      icon: Building2,
       gradient: 'from-blue-500 to-blue-600',
       bgLight: 'bg-blue-50'
     },
-    { 
-      label: 'Total Students', 
-      value: stats.students, 
-      icon: Users, 
+    {
+      label: 'Total Students',
+      value: stats.students,
+      icon: Users,
       gradient: 'from-emerald-500 to-emerald-600',
       bgLight: 'bg-emerald-50'
     },
-    { 
-      label: 'Active Courses', 
-      value: stats.courses, 
-      icon: BookOpen, 
+    {
+      label: 'Active Courses',
+      value: stats.courses,
+      icon: BookOpen,
       gradient: 'from-purple-500 to-purple-600',
       bgLight: 'bg-purple-50'
     },
-    { 
-      label: 'Franchise Requests', 
-      value: stats.applications, 
-      icon: FileText, 
+    {
+      label: 'Franchise Requests',
+      value: stats.applications,
+      icon: FileText,
       gradient: 'from-orange-500 to-orange-600',
       bgLight: 'bg-orange-50'
     },
@@ -130,7 +133,7 @@ const AdminDashboard = () => {
         <h2 className="text-xl font-bold text-slate-900 mb-6">Quick Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <button
-            onClick={() => window.location.href = '/portal/admin/franchises'}
+            onClick={() => navigate('/portal/admin/franchises')}
             className="p-4 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors text-left group"
           >
             <Building2 className="text-blue-600 mb-3" size={24} />
@@ -141,7 +144,7 @@ const AdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => window.location.href = '/portal/admin/students'}
+            onClick={() => navigate('/portal/admin/students')}
             className="p-4 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors text-left group"
           >
             <Users className="text-emerald-600 mb-3" size={24} />
@@ -152,7 +155,7 @@ const AdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => window.location.href = '/portal/admin/courses'}
+            onClick={() => navigate('/portal/admin/courses')}
             className="p-4 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors text-left group"
           >
             <BookOpen className="text-purple-600 mb-3" size={24} />
@@ -163,7 +166,7 @@ const AdminDashboard = () => {
           </button>
 
           <button
-            onClick={() => window.location.href = '/portal/admin/requests'}
+            onClick={() => navigate('/portal/admin/requests')}
             className="p-4 bg-orange-50 hover:bg-orange-100 rounded-xl transition-colors text-left group"
           >
             <FileText className="text-orange-600 mb-3" size={24} />

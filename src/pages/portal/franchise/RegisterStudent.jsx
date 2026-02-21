@@ -64,7 +64,7 @@ const RegisterStudent = () => {
 
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-0 md:p-6">
       {/* Success Message */}
       {success && (
         <motion.div
@@ -96,6 +96,7 @@ const RegisterStudent = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        className='hidden md:block'
       >
         <h1 className="text-4xl font-bold text-slate-900 mb-2">Register New Student</h1>
         <p className="text-slate-500 text-lg">Enroll a new student in your franchise</p>

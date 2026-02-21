@@ -71,12 +71,13 @@ import StudentResources from './pages/portal/student/StudentResources';
 import FranchiseHub from './pages/portal/franchise/FranchiseHub';
 import FranchiseDashboard from './pages/portal/franchise/FranchiseDashboard';
 import CourseManagement from './pages/portal/franchise/CourseManagement';
-import CourseDetails from './pages/portal/franchise/CourseDetails';
+import CourseDetails from './pages/portal/admin/CourseDetails';
 import RegisterStudent from './pages/portal/franchise/RegisterStudent';
-import RegisterExam from './pages/portal/franchise/RegisterExam';
-import PublishResults from './pages/portal/franchise/PublishResults';
+import PublishResults from './pages/portal/admin/PublishResults';
 import StudentsList from './pages/portal/franchise/StudentsList';
 import FranchiseResources from './pages/portal/admin/ResourceManagement';
+import RegisterForExam from './pages/portal/franchise/RegisterForExam';
+import PublishedExams from './pages/portal/franchise/PublishedExams';
 
 import AdminHub from './pages/portal/admin/AdminHub';
 import AdminDashboard from './pages/portal/admin/AdminDashboard';
@@ -87,6 +88,7 @@ import AdminStudentManagement from './pages/portal/admin/StudentManagement';
 import AdmissionManagement from './pages/portal/admin/AdmissionManagement';
 import FranchiseRequests from './pages/portal/admin/FranchiseRequests';
 import CertificatesAdmin from './pages/portal/admin/CertificatesAdmin';
+import CreateExam from './pages/portal/admin/CreateExam';
 
 function App() {
   return (
@@ -147,9 +149,9 @@ function App() {
                     <Route path="courses" element={<CourseManagement />} />
                     <Route path="courses/:courseId" element={<CourseDetails />} />
                     <Route path="register-student" element={<RegisterStudent />} />
+                    <Route path="register-for-exam" element={<RegisterForExam />} />
+                    <Route path="published-exams" element={<PublishedExams />} />
                     <Route path="students" element={<StudentsList />} />
-                    <Route path="register-exam" element={<RegisterExam />} />
-                    <Route path="publish-results" element={<PublishResults />} />
                   </Route>
 
                   {/* Admin Portal - Protected */}
@@ -168,10 +170,13 @@ function App() {
                     <Route path="franchises/:franchiseId" element={<FranchiseDetails />} />
                     <Route path="students" element={<AdminStudentManagement />} />
                     <Route path="courses" element={<AdminCourseManagement />} />
+                    <Route path="courses/:courseId" element={<CourseDetails />} />
+                    <Route path="create-exam" element={<CreateExam />} />
+                    <Route path="publish-results" element={<PublishResults />} />
                     <Route path="requests" element={<FranchiseRequests />} />
                     <Route path="resources" element={<FranchiseResources />} />
                     {/* Disabled features - Coming soon */}
-                    {/* <Route path="certificates" element={<CertificatesAdmin />} /> */}
+                    <Route path="certificates" element={<CertificatesAdmin />} />
                     {/* <Route path="results" element={<PlaceholderPage />} /> */}
                     {/* <Route path="analytics" element={<PlaceholderPage />} /> */}
                     {/* <Route path="content" element={<PlaceholderPage />} /> */}

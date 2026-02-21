@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, Loader2, AlertCircle, GraduationCap } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
 
 const StudentResults = () => {
@@ -33,11 +33,13 @@ const StudentResults = () => {
     return 'bg-rose-100 text-rose-700';
   };
 
-  // Group by course using populated course data
+  // Group by course safely
   const groupedResults = results.reduce((acc, result) => {
-    const course = result.course || null;
-    const courseId = course ? course._id.toString() : 'unknown';
-    const courseName = course ? course.name : 'Unknown Course';
+    const course = result.course;
+    
+    // Logic to handle if course is an object or just an ID string
+    const courseId = course?._id || (typeof course === 'string' ? course : 'unknown');
+    const courseName = course?.name || 'General / Other';
 
     if (!acc[courseId]) {
       acc[courseId] = {
@@ -49,110 +51,120 @@ const StudentResults = () => {
     return acc;
   }, {});
 
-  // Convert to array and sort groups by course name
   const groups = Object.values(groupedResults).sort((a, b) =>
     a.name.localeCompare(b.name)
   );
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <Loader2 className="animate-spin text-purple-600" size={48} />
+      <div className="flex flex-col items-center justify-center py-20">
+        <Loader2 className="animate-spin text-purple-600 mb-4" size={48} />
+        <p className="text-slate-500 font-medium">Fetching your grades...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-rose-50 border-2 border-rose-200 rounded-xl p-6 flex items-center gap-3">
+      <div className="max-w-4xl mx-auto mt-10 bg-rose-50 border-2 border-rose-200 rounded-xl p-6 flex items-center gap-3">
         <AlertCircle size={24} className="text-rose-600" />
-        <p className="text-rose-800">{error}</p>
+        <p className="text-rose-800 font-semibold">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">My Exam Results</h1>
-          <p className="text-slate-600">View your performance in various exams</p>
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-purple-600 rounded-lg text-white">
+              <GraduationCap size={24} />
+            </div>
+            <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Academic Performance</h1>
+          </div>
+          <p className="text-slate-600 text-lg">Detailed report of your examination results</p>
         </motion.div>
 
         {results.length === 0 ? (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-white rounded-2xl p-12 text-center shadow-lg border border-slate-200">
-            <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <FileText className="text-slate-400" size={32} />
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white rounded-3xl p-16 text-center shadow-sm border border-slate-200">
+            <div className="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FileText className="text-slate-300" size={40} />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No results available</h3>
-            <p className="text-slate-600">Results will appear here once published by the admin.</p>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2">No Results Found</h3>
+            <p className="text-slate-500 max-w-sm mx-auto">Your results will be visible here once the administration publishes them.</p>
           </motion.div>
         ) : (
-          <div className="space-y-8">
-            {groups.map((group, index) => {
-              const { name: courseName, results: courseResults } = group;
-
-              return (
-                <motion.div
-                  key={group.name + index} // fallback key if unknown
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden"
-                >
-                  <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
-                    <h2 className="text-2xl font-bold">{courseName}</h2>
-                    <p className="text-purple-100">{courseResults.length} exam{courseResults.length !== 1 ? 's' : ''}</p>
+          <div className="space-y-10">
+            {groups.map((group, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden"
+              >
+                <div className="bg-gradient-to-r from-slate-900 to-slate-800 p-6 text-white flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold">{group.name}</h2>
+                    <p className="text-slate-400 text-sm">Course Curriculum Performance</p>
                   </div>
-
-                  <div className="p-6">
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="border-b-2 border-slate-200">
-                            <th className="text-left py-3 px-4 text-sm font-bold text-slate-700 uppercase tracking-wide">Exam</th>
-                            <th className="text-center py-3 px-4 text-sm font-bold text-slate-700 uppercase tracking-wide">Marks</th>
-                            <th className="text-center py-3 px-4 text-sm font-bold text-slate-700 uppercase tracking-wide">Grade</th>
-                            <th className="text-center py-3 px-4 text-sm font-bold text-slate-700 uppercase tracking-wide">Published Date</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {courseResults
-                            .sort((a, b) => new Date(b.publishedDate || 0) - new Date(a.publishedDate || 0))
-                            .map((result, idx) => (
-                              <tr key={idx} className="border-b border-slate-100 hover:bg-slate-50">
-                                {/* <td className="py-4 px-4 font-mono text-sm text-slate-600">
-                                  {result.examId || 'N/A'}
-                                </td> */}
-                                <td className="py-4 px-4 font-mono text-sm text-slate-600">
-                                  {result.examName || 'N/A'}
-                                </td>
-                                <td className="py-4 px-4 text-center font-bold text-slate-900">
-                                  {result.marks !== undefined && result.marks !== null ? result.marks : 'Pending'}
-                                </td>
-                                <td className="py-4 px-4 text-center">
-                                  {result.grade ? (
-                                    <span className={`px-4 py-1.5 rounded-full font-bold text-sm ${getGradeColor(result.grade)}`}>
-                                      {result.grade}
-                                    </span>
-                                  ) : (
-                                    <span className="text-slate-400 italic">-</span>
-                                  )}
-                                </td>
-                                <td className="py-4 px-4 text-center text-sm text-slate-600">
-                                  {result.publishedDate
-                                    ? new Date(result.publishedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                                    : '-'}
-                                </td>
-                              </tr>
-                            ))}
-                        </tbody>
-                      </table>
-                    </div>
+                  <div className="bg-white/10 px-4 py-2 rounded-xl backdrop-blur-md">
+                    <span className="text-sm font-bold">{group.results.length} Exam Records</span>
                   </div>
-                </motion.div>
-              );
-            })}
+                </div>
+
+                <div className="p-2 md:p-6">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b border-slate-100">
+                          <th className="text-left py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Exam Subject</th>
+                          <th className="text-center py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Score</th>
+                          <th className="text-center py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Grade</th>
+                          <th className="text-right py-4 px-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Date Published</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50">
+                        {group.results
+                          .sort((a, b) => new Date(b.publishedDate) - new Date(a.publishedDate))
+                          .map((result, idx) => (
+                            <tr key={idx} className="hover:bg-slate-50/80 transition-colors group">
+                              <td className="py-5 px-4">
+                                <p className="font-bold text-slate-800 group-hover:text-purple-600 transition-colors">{result.examName}</p>
+                                <p className="text-xs text-slate-400 font-medium uppercase">{result.subject}</p>
+                              </td>
+                              <td className="py-5 px-4 text-center">
+                                <span className="text-lg font-black text-slate-900">
+                                  {result.marks ?? 'N/A'}
+                                </span>
+                              </td>
+                              <td className="py-5 px-4 text-center">
+                                {result.grade ? (
+                                  <span className={`inline-block w-12 py-1 rounded-lg font-black text-sm shadow-sm ${getGradeColor(result.grade)}`}>
+                                    {result.grade}
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-300">—</span>
+                                )}
+                              </td>
+                              <td className="py-5 px-4 text-right text-sm font-medium text-slate-500">
+                                {result.publishedDate
+                                  ? new Date(result.publishedDate).toLocaleDateString('en-GB', { 
+                                      day: '2-digit', 
+                                      month: 'short', 
+                                      year: 'numeric' 
+                                    })
+                                  : 'Pending'}
+                              </td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
           </div>
         )}
       </div>
