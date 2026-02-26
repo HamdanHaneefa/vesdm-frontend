@@ -16,24 +16,30 @@ export const formatDate = (date, format = 'long') => {
 
 // Format registration number
 export const formatRegNumber = (regNumber) => {
-  return regNumber.toUpperCase().replace(/\s/g, '');
+  if (!regNumber) return '';
+  return regNumber.toString().toUpperCase().replace(/\s/g, '');
 };
 
 // Validate email
 export const isValidEmail = (email) => {
+  if (!email || typeof email !== 'string') return false;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
 // Validate phone
 export const isValidPhone = (phone) => {
-  const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+  if (!phone) return false;
+  const phoneRegex = /^[\d\s\-+()]+$/;
   return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10;
 };
 
 // Calculate age from date of birth
 export const calculateAge = (dob) => {
+  if (!dob) return 0;
   const birthDate = new Date(dob);
+  if (isNaN(birthDate.getTime())) return 0;
+  
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -45,12 +51,14 @@ export const calculateAge = (dob) => {
 
 // Truncate text
 export const truncateText = (text, maxLength = 100) => {
+  if (!text || typeof text !== 'string') return '';
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength).trim() + '...';
 };
 
 // Slug generator
 export const generateSlug = (text) => {
+  if (!text || typeof text !== 'string') return '';
   return text
     .toLowerCase()
     .replace(/[^\w\s-]/g, '')

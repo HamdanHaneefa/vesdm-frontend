@@ -6,7 +6,7 @@ import {
   Loader2, AlertCircle
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
-const resourceUrl = import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '');
+const resourceUrl = (import.meta.env.VITE_API_URL || 'http://localhost:3000/api').replace(/\/api\/?$/, '');
 
 
 const StudentResources = () => {

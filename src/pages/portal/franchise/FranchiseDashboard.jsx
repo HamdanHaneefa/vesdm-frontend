@@ -77,7 +77,7 @@ const FranchiseDashboard = () => {
 
   // Prepare chart data
   const growthData = data.monthlyGrowth.map(item => ({
-    month: item._id.slice(2).replace('-', ' '), // e.g. "25 09" → nicer labels
+    month: item._id ? item._id.slice(2).replace('-', ' ') : 'Unknown', // e.g. "25 09" → nicer labels
     students: item.count
   }));
 

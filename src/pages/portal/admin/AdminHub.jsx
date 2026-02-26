@@ -2,9 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  LayoutDashboard, Building2, Users, BookOpen, FileText, Settings,
+  LayoutDashboard, Building2, Users, BookOpen, 
   LogOut, Menu, X, Bell, ChevronRight, Shield, Home, ClipboardCheck,
-  TrendingUp, Database, Award, MessageSquare, DollarSign, Calendar, FileCheck
+  Award, Calendar, FileCheck, Book
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 
