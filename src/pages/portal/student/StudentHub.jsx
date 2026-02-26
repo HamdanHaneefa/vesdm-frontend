@@ -6,6 +6,7 @@ import {
   LogOut, Menu, X, Bell, ChevronRight, GraduationCap, Home, BookOpen
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import SEO from '../../../components/SEO';
 
 const StudentHub = () => {
   const { user: currentUser, logout } = useAuth();
@@ -53,6 +54,12 @@ const StudentHub = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <SEO 
+        title="Student Portal - VESDM"
+        description="Access your courses, view progress, download certificates, and manage your student profile."
+        canonical="/portal/student"
+      />
+      
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200 shadow-xl">
         {/* Logo Section */}

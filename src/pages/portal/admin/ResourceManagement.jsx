@@ -5,6 +5,7 @@ import {
   Plus, Pencil, Trash2, X, Upload, Loader2
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
+import SEO from '../../../components/SEO';
 
 const ResourceManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -44,6 +45,26 @@ const ResourceManagement = () => {
     };
     fetchData();
   }, []);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleEscape = (e) => {
+      if (e.key === 'Escape' && modalOpen) {
+        closeModal();
+      }
+    };
+
+    if (modalOpen) {
+      document.addEventListener('keydown', handleEscape);
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [modalOpen]);
 
   const fetchResources = async () => {
     try {
@@ -175,6 +196,12 @@ const ResourceManagement = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50 p-6">
+      <SEO 
+        title="Resource Management - VESDM Admin"
+        description="Upload, organize, and manage educational resources and materials for courses"
+        canonical="/portal/admin/resources"
+      />
+      
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <motion.div
@@ -344,15 +371,28 @@ const ResourceManagement = () => {
 
         {/* Add/Edit Modal */}
         {modalOpen && (
-          <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div 
+            className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4 overflow-y-auto"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                closeModal();
+              }
+            }}
+          >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8"
+              className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-6 sm:p-8 my-4 sm:my-8 max-h-[95vh] sm:max-h-[90vh] overflow-y-auto mx-auto"
+              onClick={(e) => e.stopPropagation()}
             >
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold">{editingResource ? 'Edit' : 'Add New'} Resource</h2>
-                <button onClick={closeModal}><X className="w-6 h-6" /></button>
+                <button 
+                  onClick={closeModal}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <X className="w-6 h-6 text-gray-500 hover:text-gray-700" />
+                </button>
               </div>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
@@ -404,8 +444,8 @@ const ResourceManagement = () => {
                   <label className="block text-sm font-semibold mb-1">
                     File {editingResource ? '(optional - leave blank to keep current)' : '*'}
                   </label>
-                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center">
-                    <Upload className="w-12 h-12 mx-auto text-slate-400 mb-4" />
+                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-4 sm:p-8 text-center">
+                    <Upload className="w-8 h-8 sm:w-12 sm:h-12 mx-auto text-slate-400 mb-3 sm:mb-4" />
                     <input
                       type="file"
                       ref={fileInputRef}
@@ -416,29 +456,29 @@ const ResourceManagement = () => {
                     <button
                       type="button"
                       onClick={() => fileInputRef.current.click()}
-                      className="px-6 py-3 bg-red-100 text-red-700 rounded-xl font-semibold hover:bg-red-200 transition"
+                      className="px-4 py-2 sm:px-6 sm:py-3 bg-red-100 text-red-700 rounded-xl font-semibold hover:bg-red-200 transition text-sm sm:text-base"
                     >
                       Choose File
                     </button>
-                    {formData.file && <p className="mt-3 text-sm font-medium">{formData.file.name}</p>}
+                    {formData.file && <p className="mt-3 text-sm font-medium break-all">{formData.file.name}</p>}
                     {editingResource && !formData.file && (
-                      <p className="mt-3 text-sm text-slate-600">
+                      <p className="mt-3 text-sm text-slate-600 break-all">
                         Current: {getFileName(editingResource.fileUrl)}
                       </p>
                     )}
                   </div>
                 </div>
-                <div className="flex gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                   <button
                     type="button"
                     onClick={closeModal}
-                    className="flex-1 py-3 border border-slate-300 rounded-xl font-semibold hover:bg-slate-50 transition"
+                    className="w-full sm:flex-1 py-3 border border-slate-300 rounded-xl font-semibold hover:bg-slate-50 transition"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 bg-gradient-to-r from-red-600 to-gray-900 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition"
+                    className="w-full sm:flex-1 py-3 bg-gradient-to-r from-red-600 to-gray-900 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition"
                   >
                     {editingResource ? 'Update' : 'Add'} Resource
                   </button>

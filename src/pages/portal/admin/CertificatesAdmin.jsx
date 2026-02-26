@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Award, Search, Download, Eye, CheckCircle, XCircle,
-  Calendar, Building2, FileText, Upload, Loader2, X
+  Award, Search, Eye, CheckCircle,
+  FileText, Upload, Loader2, X
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
+import SEO from '../../../components/SEO';
 
 const CertificatesAdmin = () => {
   const [students, setStudents] = useState([]);
@@ -28,9 +29,16 @@ const CertificatesAdmin = () => {
       setLoading(true);
       // Fetching all students to manage their certificates
       const res = await apiClient.get('/students');
-      setStudents(res.data || []);
+      const studentsData = res.data;
+      if (Array.isArray(studentsData)) {
+        setStudents(studentsData);
+      } else {
+        console.error("Invalid students data format:", studentsData);
+        setStudents([]);
+      }
     } catch (err) {
       console.error("Error fetching students", err);
+      setStudents([]);
     } finally {
       setLoading(false);
     }
@@ -66,6 +74,9 @@ const CertificatesAdmin = () => {
   // Logic to flatten students into a list of "certificate view"
   // Each student can have multiple certificates or be 'pending'
   const displayData = students.flatMap(student => {
+    if (!student.enrolledCourses || !Array.isArray(student.enrolledCourses)) {
+      return [];
+    }
     return student.enrolledCourses.map(enrollment => ({
       _id: student._id,
       studentName: student.name,
@@ -82,17 +93,18 @@ const CertificatesAdmin = () => {
   });
 
   const filteredData = displayData.filter(item => {
+    if (!item) return false;
     const matchesSearch =
-      item.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.regNo.toLowerCase().includes(searchQuery.toLowerCase());
+      (item.studentName && item.studentName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.regNo && item.regNo.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const stats = [
-    { label: 'Total Records', value: displayData.length, icon: Award, color: 'blue' },
-    { label: 'Issued', value: displayData.filter(c => c.status === 'issued').length, icon: CheckCircle, color: 'emerald' },
-    { label: 'Pending', value: displayData.filter(c => c.status === 'pending').length, icon: FileText, color: 'amber' },
+    { label: 'Total Records', value: displayData ? displayData.length : 0, icon: Award, color: 'blue' },
+    { label: 'Issued', value: displayData ? displayData.filter(c => c && c.status === 'issued').length : 0, icon: CheckCircle, color: 'emerald' },
+    { label: 'Pending', value: displayData ? displayData.filter(c => c && c.status === 'pending').length : 0, icon: FileText, color: 'amber' },
   ];
 
   if (loading) return (
@@ -103,6 +115,12 @@ const CertificatesAdmin = () => {
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
+      <SEO 
+        title="Certificate Management - VESDM Admin"
+        description="Issue, manage, and track student certificates for completed courses"
+        canonical="/portal/admin/certificates"
+      />
+      
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Certificate Management</h1>
@@ -169,14 +187,14 @@ const CertificatesAdmin = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {filteredData.map((item, idx) => (
+            {filteredData && Array.isArray(filteredData) ? filteredData.map((item, idx) => (
               <tr key={idx} className="hover:bg-gray-50 transition-colors">
                 <td className="px-6 py-4">
-                  <div className="font-bold text-gray-900">{item.studentName}</div>
-                  <div className="text-xs text-gray-500 font-mono">{item.regNo}</div>
+                  <div className="font-bold text-gray-900">{item?.studentName || 'N/A'}</div>
+                  <div className="text-xs text-gray-500 font-mono">{item?.regNo || 'N/A'}</div>
                 </td>
-                <td className="px-6 py-4 text-sm text-gray-700">{item.courseName}</td>
-                <td className="px-6 py-4 text-xs font-mono text-gray-500">{item.certNo}</td>
+                <td className="px-6 py-4 text-sm text-gray-700">{item?.courseName || 'Unknown'}</td>
+                <td className="px-6 py-4 text-xs font-mono text-gray-500">{item?.certNo || 'N/A'}</td>
                 <td className="px-6 py-4">
                   {item.status === 'issued' ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">
@@ -213,7 +231,13 @@ const CertificatesAdmin = () => {
                   )}
                 </td>
               </tr>
-            ))}
+            )) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                  No certificate data available
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

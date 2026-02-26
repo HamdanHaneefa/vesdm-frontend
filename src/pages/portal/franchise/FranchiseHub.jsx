@@ -6,6 +6,7 @@ import {
   LogOut, Menu, X, Bell, ChevronRight, Building2, Home, Calendar, Award
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import SEO from '../../../components/SEO';
 
 const FranchiseHub = () => {
   const { user: currentUser, logout } = useAuth();
@@ -54,6 +55,12 @@ const FranchiseHub = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <SEO 
+        title="Franchise Portal - VESDM"
+        description="Franchise management portal to register students, manage courses, view reports, and access resources."
+        canonical="/portal/franchise"
+      />
+      
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200 shadow-xl">
         {/* Logo Section */}

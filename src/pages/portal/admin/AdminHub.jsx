@@ -7,6 +7,7 @@ import {
   Award, Calendar, FileCheck, Book
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
+import SEO from '../../../components/SEO';
 
 const AdminHub = () => {
   const { user: currentUser, logout } = useAuth();
@@ -58,6 +59,12 @@ const AdminHub = () => {
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+      <SEO 
+        title="Admin Portal - VESDM"
+        description="Administrator dashboard to manage franchises, students, courses, admissions, and system operations."
+        canonical="/portal/admin"
+      />
+      
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200 shadow-xl">
         {/* Logo Section */}

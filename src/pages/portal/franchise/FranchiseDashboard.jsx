@@ -26,6 +26,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import apiClient from '../../../api/apiClient';
+import SEO from '../../../components/SEO';
 
 const FranchiseDashboard = () => {
   const { currentUser } = useOutletContext();
@@ -148,6 +149,12 @@ const FranchiseDashboard = () => {
 
   return (
     <div className="space-y-8 pb-12">
+      <SEO 
+        title="Dashboard - VESDM Franchise Portal"
+        description="View your franchise performance metrics, student enrollment trends, and manage daily operations."
+        canonical="/portal/franchise/dashboard"
+      />
+      
       {/* Welcome Header */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
