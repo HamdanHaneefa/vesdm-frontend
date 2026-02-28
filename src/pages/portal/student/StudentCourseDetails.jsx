@@ -18,7 +18,7 @@ const StudentCourseDetails = () => {
     const fetchCourse = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get(`/student/courses/${courseId}`);
+        const response = await apiClient.get(`/courses/${courseId}`);
         setData(response.data);
         setError(null);
       } catch (err) {

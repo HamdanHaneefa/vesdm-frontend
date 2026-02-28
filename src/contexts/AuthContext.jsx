@@ -27,9 +27,39 @@ export const AuthProvider = ({ children }) => {
           return;
         }
 
-        // Verify token with backend and get current user data
-        const response = await apiClient.get('/auth/me');
-        setUser(response.data.user);
+        // Check if this is a student token
+        if (token.startsWith('student_')) {
+          // For student tokens, check if we already have user data stored
+          const storedUser = localStorage.getItem('vesdm_user');
+          if (storedUser) {
+            try {
+              const userData = JSON.parse(storedUser);
+              setUser(userData);
+            } catch (e) {
+              // If stored data is invalid, create minimal student user
+              const studentId = token.split('_')[1];
+              const studentUser = {
+                id: studentId,
+                _id: studentId,
+                role: 'student',
+              };
+              setUser(studentUser);
+            }
+          } else {
+            // No stored user data, create minimal student user
+            const studentId = token.split('_')[1];
+            const studentUser = {
+              id: studentId,
+              _id: studentId,
+              role: 'student',
+            };
+            setUser(studentUser);
+          }
+        } else {
+          // Regular user token - verify with backend
+          const response = await apiClient.get('/auth/me');
+          setUser(response.data.user);
+        }
       } catch (error) {
         console.error('Error fetching current user:', error);
         // Invalid token, clear it
@@ -49,6 +79,13 @@ export const AuthProvider = ({ children }) => {
 
     const verifyUser = async () => {
       try {
+        const token = localStorage.getItem('vesdm_token');
+        
+        // Skip verification for student tokens
+        if (token && token.startsWith('student_')) {
+          return; // Student tokens don't need periodic verification
+        }
+
         const response = await apiClient.get('/auth/me');
         const backendUser = response.data.user;
         
@@ -67,8 +104,11 @@ export const AuthProvider = ({ children }) => {
         setUser(backendUser);
       } catch (error) {
         console.error('Token verification failed:', error);
-        // Token invalid, logout
-        logout();
+        // Token invalid, logout - but only for non-student tokens
+        const token = localStorage.getItem('vesdm_token');
+        if (!token || !token.startsWith('student_')) {
+          logout();
+        }
       }
     };
 
@@ -80,6 +120,12 @@ export const AuthProvider = ({ children }) => {
   const login = (token, userData) => {
     // Store ONLY the token in localStorage
     localStorage.setItem('vesdm_token', token);
+    
+    // For student tokens, also store user data in localStorage
+    if (token.startsWith('student_')) {
+      localStorage.setItem('vesdm_user', JSON.stringify(userData));
+    }
+    
     // Store user data in memory (React state)
     setUser(userData);
   };
@@ -87,6 +133,7 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('vesdm_token');
+    localStorage.removeItem('vesdm_user'); // Also remove stored user data
     navigate('/login', { replace: true });
   };
 

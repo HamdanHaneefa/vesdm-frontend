@@ -27,8 +27,8 @@ const StudentDashboard = () => {
         setError(null);
 
         const [dashRes, resultsRes] = await Promise.all([
-          apiClient.get('/student/dashboard'),
-          apiClient.get('/student/results')
+          apiClient.get('/students/dashboard'),
+          apiClient.get('/students/results')
         ]);
 
         setDashboard(dashRes.data);

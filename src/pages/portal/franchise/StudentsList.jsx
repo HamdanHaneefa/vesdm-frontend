@@ -4,11 +4,9 @@ import {
   Users,
   Search,
   Eye,
-  Edit2,
   Loader2,
   AlertCircle,
   BookOpen,
-  Calendar,
   Mail,
   Phone
 } from 'lucide-react';
@@ -46,9 +44,9 @@ const StudentsList = () => {
   };
 
   // Derived filter options
-  const allCourses = students.flatMap(s =>
-    s.enrolledCourses?.map(ec => ec.course?.name).filter(Boolean) || []
-  );
+  const allCourses = students
+    .map(s => s.course?.name)
+    .filter(Boolean);
   const uniqueCourses = ['all', ...new Set(allCourses)];
 
   const uniqueYears = ['all', ...new Set(
@@ -63,10 +61,9 @@ const StudentsList = () => {
       student.registrationNumber?.toLowerCase().includes(searchLower) ||
       student.email?.toLowerCase().includes(searchLower);
 
-    const studentCourses = student.enrolledCourses?.map(ec => ec.course?.name) || [];
     const matchesCourse =
       filters.course === 'all' ||
-      studentCourses.includes(filters.course);
+      student.course?.name === filters.course;
 
     const matchesYear =
       filters.year === 'all' ||
@@ -76,15 +73,12 @@ const StudentsList = () => {
   });
 
   // Helper: get display course info
-  const getCourseDisplay = (enrolledCourses) => {
-    if (!enrolledCourses?.length) return { name: 'N/A', type: '' };
-    if (enrolledCourses.length === 1) {
-      return {
-        name: enrolledCourses[0].course?.name || 'Unknown',
-        type: enrolledCourses[0].course?.type || ''
-      };
-    }
-    return { name: `Multiple (${enrolledCourses.length})`, type: '' };
+  const getCourseDisplay = (course) => {
+    if (!course) return { name: 'N/A', type: '' };
+    return {
+      name: course.name || 'Unknown',
+      type: course.type || ''
+    };
   };
 
   return (
@@ -213,7 +207,7 @@ const StudentsList = () => {
                       </tr>
                     ) : (
                       filteredStudents.map((student, idx) => {
-                        const courseInfo = getCourseDisplay(student.enrolledCourses);
+                        const courseInfo = getCourseDisplay(student.course);
                         return (
                           <motion.tr
                             key={student._id}
@@ -258,11 +252,6 @@ const StudentsList = () => {
                                   </p>
                                   {courseInfo.type && (
                                     <p className="text-xs text-slate-500 mt-0.5">{courseInfo.type}</p>
-                                  )}
-                                  {student.enrolledCourses?.length > 1 && (
-                                    <p className="text-xs text-indigo-600 mt-1 font-medium">
-                                      +{student.enrolledCourses.length - 1} more
-                                    </p>
                                   )}
                                 </div>
                               </div>
@@ -373,51 +362,43 @@ const StudentsList = () => {
                     </div>
 
                     <div>
-                      <p className="text-sm text-slate-500 mb-3 font-medium">Enrolled Courses ({selectedStudent.enrolledCourses?.length || 0})</p>
-                      {selectedStudent.enrolledCourses?.length > 0 ? (
-                        <div className="space-y-4">
-                          {selectedStudent.enrolledCourses.map((ec, i) => (
-                            <div
-                              key={i}
-                              className="bg-slate-50 border border-slate-100 p-4 rounded-xl hover:bg-slate-100/80 transition-colors"
-                            >
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <p className="font-semibold text-slate-900">
-                                    {ec.course?.name || 'Unknown Course'}
-                                  </p>
-                                  {ec.course?.type && (
-                                    <p className="text-sm text-slate-600 mt-0.5">{ec.course.type}</p>
-                                  )}
-                                </div>
-                                <span className={`px-3 py-1 text-xs font-medium rounded-full capitalize ${ec.status === 'completed' ? 'bg-emerald-100 text-emerald-700' :
-                                  ec.status === 'ongoing' ? 'bg-blue-100 text-blue-700' :
-                                    'bg-slate-100 text-slate-700'
-                                  }`}>
-                                  {ec.status}
-                                </span>
-                              </div>
-
-                              <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                  <p className="text-slate-500">Progress</p>
-                                  <p className="font-medium">{ec.progress || 0}%</p>
-                                </div>
-                                <div>
-                                  <p className="text-slate-500">Enrolled</p>
-                                  <p className="font-medium">
-                                    {new Date(ec.enrollmentDate).toLocaleDateString('en-GB', {
-                                      day: '2-digit', month: 'short', year: 'numeric'
-                                    })}
-                                  </p>
-                                </div>
-                              </div>
+                      <p className="text-sm text-slate-500 mb-3 font-medium">Course Information</p>
+                      {selectedStudent.course ? (
+                        <div className="bg-slate-50 border border-slate-100 p-4 rounded-xl">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-semibold text-slate-900">
+                                {selectedStudent.course.name || 'Unknown Course'}
+                              </p>
+                              {selectedStudent.course.type && (
+                                <p className="text-sm text-slate-600 mt-0.5">{selectedStudent.course.type}</p>
+                              )}
                             </div>
-                          ))}
+                            <span className="px-3 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-700">
+                              Enrolled
+                            </span>
+                          </div>
+
+                          <div className="mt-3 grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-slate-500">Enrollment Date</p>
+                              <p className="font-medium">
+                                {selectedStudent.enrollmentDate ? 
+                                  new Date(selectedStudent.enrollmentDate).toLocaleDateString('en-GB', {
+                                    day: '2-digit', month: 'short', year: 'numeric'
+                                  }) : '—'
+                                }
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-slate-500">Academic Year</p>
+                              <p className="font-medium">{selectedStudent.year || '—'}</p>
+                            </div>
+                          </div>
                         </div>
                       ) : (
                         <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-xl">
-                          No courses enrolled yet
+                          No course assigned yet
                         </div>
                       )}
                     </div>

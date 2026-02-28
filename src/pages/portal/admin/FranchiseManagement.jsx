@@ -21,6 +21,7 @@ const FranchiseManagement = () => {
     email: ''
   });
   const [formLoading, setFormLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   useEffect(() => {
     fetchFranchises();
@@ -30,7 +31,15 @@ const FranchiseManagement = () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/users');
-      setFranchises(response.data);
+      // Filter only franchisees and add default values for missing fields
+      const franchiseData = response.data.filter(user => user.role === 'franchisee').map(user => ({
+        ...user,
+        status: 'active', // Default status since it's not in the database
+        location: 'Location not set', // Default location
+        phone: 'Not provided', // Default phone
+        joinedDate: user.createdAt || user.updatedAt || new Date().toISOString() // Use any available date or current date
+      }));
+      setFranchises(franchiseData);
       setError('');
     } catch (err) {
       console.error('Error fetching franchises:', err);
@@ -42,21 +51,50 @@ const FranchiseManagement = () => {
 
   const handleAddFranchise = async (e) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setFormErrors({});
+    
+    // Validation
+    const errors = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = 'Full name is required';
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = 'Email address is required';
+    } else {
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        errors.email = 'Please enter a valid email address';
+      }
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    
     setFormLoading(true);
 
     try {
-      const response = await apiClient.post('/users', {
+      await apiClient.post('/users', {
         name: formData.name,
         email: formData.email
+        // Note: No password sent - backend will generate and email it
       });
 
       await fetchFranchises();
-      setShowAddModal(false);
-      setFormData({ name: '', email: ''});
-      alert('Franchisee created successfully!');
+      handleCloseModal();
+      
+      // Show success message indicating email was sent
+      alert(`Franchisee created successfully!\n\nLogin credentials have been sent to ${formData.email}\n\nThe franchisee can use these credentials to log in and change their password.`);
     } catch (err) {
       console.error('Error creating franchisee:', err);
-      alert(err.response?.data?.msg || 'Failed to create franchisee');
+      const errorMessage = err.response?.data?.msg || 'Failed to create franchisee. Please try again.';
+      alert(errorMessage);
     } finally {
       setFormLoading(false);
     }
@@ -65,6 +103,17 @@ const FranchiseManagement = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setFormData({ name: '', email: '' });
+    setFormErrors({});
   };
 
   const filteredFranchises = franchises.filter(franchise => {
@@ -76,12 +125,14 @@ const FranchiseManagement = () => {
   });
 
   const stats = [
-    { label: 'Total Franchises', value: franchises.filter(f => f.role === 'franchisee').length, icon: Building2, color: 'blue' },
-    { label: 'Active Users', value: franchises.length, icon: Users, color: 'emerald' },
+    { label: 'Total Franchises', value: franchises.length, icon: Building2, color: 'blue' },
+    { label: 'Active Users', value: franchises.filter(f => f.status === 'active').length, icon: Users, color: 'emerald' },
     { label: 'Registered', value: franchises.length, icon: CheckCircle, color: 'purple' },
     {
       label: 'This Month', value: franchises.filter(f => {
-        const created = new Date(f.createdAt);
+        const dateField = f.createdAt || f.updatedAt;
+        if (!dateField) return false;
+        const created = new Date(dateField);
         const now = new Date();
         return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
       }).length, icon: TrendingUp, color: 'amber'
@@ -194,10 +245,11 @@ const FranchiseManagement = () => {
                   <Building2 size={28} />
                 </div>
                 <span className="px-3 py-1 bg-white/20 backdrop-blur-sm text-white text-xs font-bold rounded-full flex items-center gap-1">
-                  <CheckCircle size={12} />Franchisee
+                  <CheckCircle size={12} />
+                  {franchise.status === 'active' ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <h3 className="text-xl font-bold mb-1">{franchise.name || 'Unnamed'}</h3>
+              <h3 className="text-xl font-bold mb-1">{franchise.name || 'Unnamed Franchise'}</h3>
               <p className="text-blue-100 text-sm">Role: {franchise.role}</p>
             </div>
 
@@ -212,7 +264,13 @@ const FranchiseManagement = () => {
                 <div className="flex items-center gap-3 text-sm">
                   <Calendar className="text-slate-400" size={16} />
                   <span className="text-slate-600">
-                    Joined: {franchise.createdAt ? new Date(franchise.createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : 'N/A'}
+                    Joined: {(() => {
+                      const dateField = franchise.createdAt || franchise.updatedAt;
+                      if (dateField) {
+                        return new Date(dateField).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                      }
+                      return 'Recently';
+                    })()}
                   </span>
                 </div>
               </div>
@@ -270,7 +328,7 @@ const FranchiseManagement = () => {
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowAddModal(false)}
+                  onClick={handleCloseModal}
                   className="p-2 hover:bg-white/10 rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" />
@@ -292,8 +350,13 @@ const FranchiseManagement = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="e.g., John Doe"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        formErrors.name ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                     />
+                    {formErrors.name && (
+                      <p className="text-red-600 text-sm mt-1">{formErrors.name}</p>
+                    )}
                   </div>
 
                   {/* Email */}
@@ -308,8 +371,13 @@ const FranchiseManagement = () => {
                       onChange={handleInputChange}
                       required
                       placeholder="franchisee@example.com"
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                        formErrors.email ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                      }`}
                     />
+                    {formErrors.email && (
+                      <p className="text-red-600 text-sm mt-1">{formErrors.email}</p>
+                    )}
                   </div>
 
                   {/* Password */}
@@ -332,7 +400,7 @@ const FranchiseManagement = () => {
 
                   <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Note:</strong> The franchisee will receive an email with login credentials. They can change their password after first login.
+                      <strong>Note:</strong> Login credentials will be automatically generated and sent to the provided email address. The franchisee can change their password after first login.
                     </p>
                   </div>
                 </div>
@@ -341,7 +409,7 @@ const FranchiseManagement = () => {
                 <div className="flex gap-3 mt-6 pt-4 border-t border-gray-200 px-6 pb-6">
                   <button
                     type="button"
-                    onClick={() => setShowAddModal(false)}
+                    onClick={handleCloseModal}
                     className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                   >
                     Cancel

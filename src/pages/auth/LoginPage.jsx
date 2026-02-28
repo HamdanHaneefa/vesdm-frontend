@@ -65,26 +65,74 @@ const LoginPage = () => {
     setError('');
 
     try {
-      const response = await apiClient.post('/auth/login', {
-        email: formData.email,
-        password: formData.password,
-      });
+      // Auto-detect if input is email or registration number
+      const isEmail = formData.email.includes('@');
+      const isRegistrationNumber = formData.email.startsWith('VESDM');
+      
+      let response;
+      
+      if (isRegistrationNumber) {
+        // Student login
+        response = await apiClient.post('/students/student-access', {
+          registrationNumber: formData.email,
+          password: formData.password,
+        });
+        
+        // For student login, we get different response structure
+        const { student, success, message } = response.data;
+        
+        if (success && student) {
+          // Create a user-like object for compatibility with existing auth context
+          const userObj = {
+            ...student,
+            role: 'student',
+            id: student._id
+          };
+          
+          // For now, we'll use a simple token (you can enhance this later)
+          const token = `student_${student._id}_${Date.now()}`;
+          
+          // Store in auth context
+          login(token, userObj);
+          
+          // Check if password change is needed
+          if (student.isTemporaryPassword) {
+            // Redirect to password change page first
+            navigate('/portal/student/change-password', { 
+              replace: true, 
+              state: { message: message, mustChangePassword: true }
+            });
+          } else {
+            // Navigate to student portal
+            navigate('/portal/student', { replace: true });
+          }
+        }
+      } else if (isEmail) {
+        // Admin/Franchisee login
+        response = await apiClient.post('/auth/login', {
+          email: formData.email,
+          password: formData.password,
+        });
 
-      const { token, user } = response.data;
+        const { token, user } = response.data;
 
-      // Store token and user data using auth context
-      login(token, user);
+        // Store token and user data using auth context
+        login(token, user);
 
-      // Navigate to the appropriate portal based on user role
-      // Map 'franchisee' role to 'franchise' route
-      const portalPath = user.role === 'franchisee' ? 'franchise' : user.role;
-      console.log('🔍 LoginPage: After login redirect', { role: user.role, portalPath });
-      navigate(`/portal/${portalPath}`, { replace: true });
+        // Navigate to the appropriate portal based on user role
+        const portalPath = user.role === 'franchisee' ? 'franchise' : user.role;
+        console.log('🔍 LoginPage: After login redirect', { role: user.role, portalPath });
+        navigate(`/portal/${portalPath}`, { replace: true });
+      } else {
+        throw new Error('Please enter a valid email address or registration number (VESDM...)');
+      }
+      
     } catch (err) {
       console.error('Login error:', err);
       setError(
         err.response?.data?.msg || 
         err.response?.data?.message || 
+        err.message ||
         'Login failed. Please check your credentials and try again.'
       );
     } finally {
@@ -215,7 +263,7 @@ const LoginPage = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
-                placeholder="name@example.com or REG123"
+                placeholder="franchisee@example.com"
                 className="w-full border-2 border-slate-200 px-4 py-3.5 rounded-xl outline-none focus:border-[#007ACC] focus:ring-4 focus:ring-blue-50 transition-all bg-white"
               />
             </div>

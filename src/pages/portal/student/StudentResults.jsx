@@ -12,7 +12,7 @@ const StudentResults = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const resultsRes = await apiClient.get('/student/results');
+        const resultsRes = await apiClient.get('/students/results');
         setResults(resultsRes.data || []);
         setError(null);
       } catch (err) {

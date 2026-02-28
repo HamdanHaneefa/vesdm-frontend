@@ -40,8 +40,60 @@ const FranchiseDashboard = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await apiClient.get('/franchise/dashboard');
-        setData(res.data);
+        
+        // Fetch data from existing endpoints instead of non-existent /franchise/dashboard
+        const [studentsRes, coursesRes] = await Promise.all([
+          apiClient.get('/students'),
+          apiClient.get('/courses')
+        ]);
+
+        // Process the data to match the expected format
+        const students = studentsRes.data || [];
+        const courses = coursesRes.data || [];
+
+        // Calculate dashboard metrics
+        const totalStudents = students.length;
+        const ongoingCourses = courses.length;
+        const certificatesIssued = students.filter(s => s && s.certificate).length;
+        const completedCourses = students.filter(s => s && s.certificate).length;
+
+        // Generate monthly growth data (simplified)
+        const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+        const monthlyGrowth = [
+          { _id: currentMonth, count: totalStudents }
+        ];
+
+        // Top courses by enrollment
+        const courseEnrollments = {};
+        students.forEach(student => {
+          if (!student) return;
+          
+          let courseName = 'Unknown Course';
+          if (typeof student.course === 'object' && student.course?.name) {
+            courseName = student.course.name;
+          } else if (student.course) {
+            const foundCourse = courses.find(c => c._id === student.course);
+            courseName = foundCourse?.name || 'Unknown Course';
+          }
+          
+          courseEnrollments[courseName] = (courseEnrollments[courseName] || 0) + 1;
+        });
+
+        const topCourses = Object.entries(courseEnrollments)
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+
+        // Set the processed data
+        setData({
+          totalStudents,
+          ongoingCourses,
+          certificatesIssued,
+          completedCourses,
+          monthlyGrowth,
+          topCourses,
+          upcomingExams: [] // Add empty array for upcoming exams
+        });
       } catch (err) {
         console.error('Franchise dashboard error:', err);
         setError('Failed to load dashboard data');
@@ -76,30 +128,30 @@ const FranchiseDashboard = () => {
     );
   }
 
-  // Prepare chart data
-  const growthData = data.monthlyGrowth.map(item => ({
-    month: item._id ? item._id.slice(2).replace('-', ' ') : 'Unknown', // e.g. "25 09" → nicer labels
-    students: item.count
+  // Prepare chart data - with null safety
+  const growthData = (data.monthlyGrowth || []).map(item => ({
+    month: item._id ? item._id.slice(2).replace('-', ' ') : 'Unknown',
+    students: item.count || 0
   }));
 
-  const programData = data.topCourses?.map(c => ({
-    program: c.name.length > 18 ? c.name.substring(0, 15) + '...' : c.name,
-    students: c.count   // ← note: using .count from backend
-  })) || [];
+  const programData = (data.topCourses || []).map(c => ({
+    program: (c.name && c.name.length > 18) ? c.name.substring(0, 15) + '...' : (c.name || 'Unknown'),
+    students: c.count || 0
+  }));
 
-  // Stats cards – real values
+  // Stats cards – real values with null safety
   const stats = [
     {
       label: 'Total Students',
-      value: data.totalStudents,
+      value: data.totalStudents || 0,
       icon: Users,
       gradient: 'from-blue-500 to-blue-600',
-      change: data.totalStudents > 100 ? '+12%' : '+new',
+      change: (data.totalStudents || 0) > 100 ? '+12%' : '+new',
       changeType: 'increase'
     },
     {
       label: 'Active Programs',
-      value: data.ongoingCourses,
+      value: data.ongoingCourses || 0,
       icon: GraduationCap,
       gradient: 'from-purple-500 to-purple-600',
       change: '',
@@ -107,7 +159,7 @@ const FranchiseDashboard = () => {
     },
     {
       label: 'Certificates Issued',
-      value: data.certificatesIssued,
+      value: data.certificatesIssued || 0,
       icon: Award,
       gradient: 'from-amber-500 to-amber-600',
       change: '',
@@ -116,8 +168,8 @@ const FranchiseDashboard = () => {
     {
       label: 'Success Rate',
       value:
-        data.totalStudents > 0
-          ? Math.round((data.completedCourses / data.totalStudents) * 100) + '%'
+        (data.totalStudents || 0) > 0
+          ? Math.round(((data.completedCourses || 0) / data.totalStudents) * 100) + '%'
           : '—',
       icon: TrendingUp,
       gradient: 'from-emerald-500 to-emerald-600',
@@ -167,7 +219,7 @@ const FranchiseDashboard = () => {
               Welcome, {currentUser?.name?.split(' ')[0] || 'Franchisee'}
             </h1>
             <p className="text-purple-100 text-lg md:text-xl opacity-90">
-              Here's your center's performance overview •{' '}
+              Here&apos;s your center&apos;s performance overview •{' '}
               {new Date().toLocaleDateString('en-IN')}
             </p>
           </div>
@@ -342,13 +394,13 @@ const FranchiseDashboard = () => {
               Upcoming Exams
             </h3>
 
-            {data.upcomingExams.length === 0 ? (
+            {(data.upcomingExams || []).length === 0 ? (
               <div className="text-center py-8 text-slate-500 bg-slate-50 rounded-xl">
                 No upcoming exams scheduled at the moment.
               </div>
             ) : (
               <div className="space-y-4">
-                {data.upcomingExams
+                {(data.upcomingExams || [])
                   .sort((a, b) => new Date(a.date) - new Date(b.date))
                   .slice(0, 6)
                   .map((exam, i) => (

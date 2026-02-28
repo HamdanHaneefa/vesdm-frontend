@@ -17,6 +17,22 @@ const AdminHub = () => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
 
+  // Function to get the correct dashboard route based on user role
+  const getDashboardRoute = () => {
+    if (!currentUser) return '/';
+    
+    switch (currentUser.role) {
+      case 'admin':
+        return '/portal/admin/dashboard';
+      case 'franchisee':
+        return '/portal/franchise/dashboard';
+      case 'student':
+        return '/portal/student/dashboard';
+      default:
+        return '/';
+    }
+  };
+
   useEffect(() => {
     const scrollToTop = () => {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
@@ -69,7 +85,7 @@ const AdminHub = () => {
       <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200 shadow-xl">
         {/* Logo Section */}
         <div className="p-6 border-b border-slate-100">
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to={getDashboardRoute()} className="flex items-center gap-3 group">
             <div className="w-12 h-12 bg-gradient-to-br from-red-600 to-[#0F172A] rounded-xl flex items-center justify-center shadow-lg shadow-red-500/30 group-hover:scale-105 transition-transform">
               <Shield size={24} className="text-white" />
             </div>

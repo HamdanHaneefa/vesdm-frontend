@@ -1,82 +1,148 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   ArrowLeft, Building2, MapPin, Phone, Mail, Calendar, Users, BookOpen,
-  DollarSign, TrendingUp, Star, Edit, Ban, CheckCircle, Clock, FileText,
-  Download, Lock, Unlock, AlertCircle, Activity, Award, BarChart3
+  TrendingUp, Edit, Ban, FileText,
+  Download, Lock, Unlock, AlertCircle, Activity
 } from 'lucide-react';
+import apiClient from '../../../api/apiClient';
+import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const FranchiseDetails = () => {
   const { franchiseId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
+  const [franchise, setFranchise] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  // Sample franchise data (in real app, fetch based on franchiseId)
-  const franchise = {
-    id: franchiseId,
-    name: 'VESDM Mumbai',
-    owner: 'Rajesh Patel',
-    email: 'rajesh@vesdmmumbai.com',
-    phone: '+91 98765 43210',
-    location: 'Andheri West, Mumbai, Maharashtra',
-    address: '123 Main Street, Andheri West, Mumbai - 400053',
-    joinedDate: '2023-06-15',
-    status: 'active',
-    students: 450,
-    courses: 12,
-    rating: 4.8,
-    revenue: '₹22,50,000',
-    description: 'Premier skill development center in Mumbai offering industry-standard courses with state-of-the-art infrastructure and experienced faculty.',
-    infrastructure: {
-      classrooms: 8,
-      labs: 4,
-      capacity: 500,
-      wifi: true,
-      library: true,
-      cafeteria: true
-    },
-    performance: {
-      placementRate: 85,
-      studentSatisfaction: 92,
-      courseCompletion: 88,
-      averageGrade: 'A'
+  const fetchFranchiseData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      // Fetch franchise data (user with role 'franchisee')
+      const usersResponse = await apiClient.get('/users');
+      const franchiseUser = usersResponse.data.find(user => user._id === franchiseId);
+      
+      if (!franchiseUser) {
+        setError('Franchise not found');
+        return;
+      }
+
+      // Fetch students for this franchise
+      let franchiseStudents = [];
+      
+      try {
+        // Get all students - the backend may already filter by user role
+        const studentsResponse = await apiClient.get('/students');
+        
+        if (studentsResponse.data.length > 0) {
+          // Check if franchisee field is available in the response
+          const hasfranchiseeField = studentsResponse.data[0].franchisee !== undefined;
+          
+          if (hasfranchiseeField) {
+            // Filter students by franchisee ID if the field is available
+            franchiseStudents = studentsResponse.data.filter(student => {
+              if (!student.franchisee) return false;
+              
+              const studentFranchiseeId = typeof student.franchisee === 'object' 
+                ? student.franchisee._id 
+                : student.franchisee;
+              
+              return studentFranchiseeId === franchiseId;
+            });
+          } else {
+            // If no franchisee field, fetch individual student details to get franchisee info
+            const studentsWithDetails = await Promise.all(
+              studentsResponse.data.map(async (student) => {
+                try {
+                  const detailResponse = await apiClient.get(`/students/${student._id}`);
+                  return detailResponse.data;
+                } catch (error) {
+                  console.error(`Failed to fetch details for student ${student._id}:`, error);
+                  return null;
+                }
+              })
+            );
+            
+            // Filter out null responses and then filter by franchisee
+            franchiseStudents = studentsWithDetails
+              .filter(student => student !== null)
+              .filter(student => {
+                if (!student.franchisee) return false;
+                
+                const studentFranchiseeId = typeof student.franchisee === 'object' 
+                  ? student.franchisee._id 
+                  : student.franchisee;
+                
+                return studentFranchiseeId === franchiseId;
+              });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching students:', err);
+        franchiseStudents = [];
+      }
+
+      // Fetch all courses
+      const coursesResponse = await apiClient.get('/courses');
+      
+      // Set the franchise data with computed values
+      setFranchise({
+        ...franchiseUser,
+        owner: franchiseUser.name || 'Name not set', // Use 'name' field from User model
+        status: 'active', // Default since not in DB
+        location: 'Location not set',
+        address: 'Address not provided',
+        phone: 'Not provided',
+        joinedDate: franchiseUser.createdAt || franchiseUser.updatedAt || new Date().toISOString(), // Try multiple date fields
+        students: franchiseStudents.length,
+        courses: coursesResponse.data.length,
+        revenue: '₹0', // Would need to calculate from actual data
+        description: 'Professional skill development franchise',
+        infrastructure: {
+          classrooms: 'N/A',
+          labs: 'N/A',
+          capacity: 'N/A',
+          wifi: true,
+          library: false,
+          cafeteria: false
+        },
+        performance: {
+          placementRate: 0,
+          studentSatisfaction: 0,
+          courseCompletion: 0,
+          averageGrade: 'N/A'
+        }
+      });
+      
+      setStudents(franchiseStudents);
+      setCourses(coursesResponse.data);
+      
+    } catch (err) {
+      console.error('Error fetching franchise data:', err);
+      setError('Failed to load franchise data');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [franchiseId]);
 
-  const courses = [
-    { id: 1, name: 'Digital Marketing Professional', students: 85, active: true, revenue: '₹4,25,000', completion: 92 },
-    { id: 2, name: 'Web Development Bootcamp', students: 120, active: true, revenue: '₹6,00,000', completion: 88 },
-    { id: 3, name: 'Business Management', students: 75, active: true, revenue: '₹3,75,000', completion: 95 },
-    { id: 4, name: 'Data Analytics', students: 95, active: true, revenue: '₹4,75,000', completion: 90 },
-    { id: 5, name: 'Graphic Design', students: 45, active: false, revenue: '₹2,25,000', completion: 85 },
-    { id: 6, name: 'Mobile App Development', students: 30, active: true, revenue: '₹1,50,000', completion: 87 }
-  ];
+  useEffect(() => {
+    fetchFranchiseData();
+  }, [fetchFranchiseData]);
 
+  // Default data for features not yet implemented
   const [resources, setResources] = useState([
-    { id: 1, name: 'Digital Marketing Study Guide 2024', type: 'PDF', course: 'Digital Marketing', size: '5.2 MB', blocked: false, downloads: 245 },
-    { id: 2, name: 'Web Development Video Tutorials', type: 'Video', course: 'Web Development', size: '850 MB', blocked: false, downloads: 320 },
-    { id: 3, name: 'Business Case Studies Collection', type: 'PDF', course: 'Business Management', size: '12 MB', blocked: false, downloads: 156 },
-    { id: 4, name: 'Python Programming Exercises', type: 'Code', course: 'Data Analytics', size: '2.5 MB', blocked: true, downloads: 198 },
-    { id: 5, name: 'Design Software Tutorials', type: 'Video', course: 'Graphic Design', size: '1.2 GB', blocked: false, downloads: 89 },
-    { id: 6, name: 'React Native Project Templates', type: 'Code', course: 'Mobile App Development', size: '45 MB', blocked: false, downloads: 67 },
-    { id: 7, name: 'SEO Tools and Resources', type: 'PDF', course: 'Digital Marketing', size: '8.5 MB', blocked: false, downloads: 203 },
-    { id: 8, name: 'SQL Database Practice Sets', type: 'Database', course: 'Data Analytics', size: '15 MB', blocked: false, downloads: 178 }
+    { id: 1, name: 'Course Materials', type: 'PDF', course: 'General', size: '5.2 MB', blocked: false, downloads: 0 },
+    { id: 2, name: 'Video Tutorials', type: 'Video', course: 'General', size: '850 MB', blocked: false, downloads: 0 }
   ]);
 
-  const students = [
-    { id: 'STU-2023-045', name: 'Rahul Kumar', course: 'Digital Marketing', enrollment: '2023-07-01', status: 'Active', progress: 85 },
-    { id: 'STU-2023-078', name: 'Priya Sharma', course: 'Web Development', enrollment: '2023-07-15', status: 'Active', progress: 72 },
-    { id: 'STU-2024-012', name: 'Amit Patel', course: 'Business Management', enrollment: '2024-01-10', status: 'Active', progress: 45 },
-    { id: 'STU-2023-156', name: 'Neha Gupta', course: 'Data Analytics', enrollment: '2023-09-01', status: 'Completed', progress: 100 },
-    { id: 'STU-2024-034', name: 'Vikram Singh', course: 'Digital Marketing', enrollment: '2024-02-05', status: 'Active', progress: 38 }
-  ];
-
   const activities = [
-    { date: '2026-01-05', action: 'New student enrolled', details: '5 students enrolled in Web Development' },
-    { date: '2026-01-03', action: 'Course completed', details: 'Business Management batch completed' },
-    { date: '2025-12-28', action: 'Results published', details: 'Digital Marketing exam results published' },
-    { date: '2025-12-20', action: 'Resource uploaded', details: 'New study materials added for Data Analytics' }
+    { date: new Date().toISOString().split('T')[0], action: 'Franchise created', details: 'New franchise account created' },
   ];
 
   const toggleResourceBlock = (resourceId) => {
@@ -97,7 +163,30 @@ const FranchiseDetails = () => {
 
   return (
     <div className="p-8">
-      {/* Header */}
+      {loading && (
+        <div className="flex items-center justify-center min-h-screen">
+          <LoadingSpinner size="large" />
+        </div>
+      )}
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 text-red-600">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5" />
+            <span>{error}</span>
+          </div>
+          <button 
+            onClick={() => navigate('/portal/admin/franchises')}
+            className="mt-2 text-red-700 underline hover:no-underline"
+          >
+            Back to Franchises
+          </button>
+        </div>
+      )}
+
+      {!loading && !error && franchise && (
+        <>
+          {/* Header */}
       <div className="mb-8">
         <button
           onClick={() => navigate('/portal/admin/franchises')}
@@ -121,7 +210,7 @@ const FranchiseDetails = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  <span>Joined {new Date(franchise.joinedDate).toLocaleDateString()}</span>
+                  <span>Joined {franchise.joinedDate ? new Date(franchise.joinedDate).toLocaleDateString() : 'Date not available'}</span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -132,10 +221,6 @@ const FranchiseDetails = () => {
                 } text-sm font-bold rounded-full`}>
                   {franchise.status === 'active' ? '● Active' : franchise.status === 'pending' ? '● Pending' : '● Suspended'}
                 </span>
-                <div className="flex items-center gap-1 px-3 py-1 bg-yellow-100 rounded-full">
-                  <Star className="w-4 h-4 text-yellow-600 fill-yellow-600" />
-                  <span className="text-sm font-bold text-yellow-700">{franchise.rating}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -153,7 +238,7 @@ const FranchiseDetails = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -192,27 +277,12 @@ const FranchiseDetails = () => {
         >
           <div className="flex items-center justify-between mb-4">
             <div className="p-3 bg-green-100 rounded-lg">
-              <DollarSign className="w-6 h-6 text-green-600" />
+              <Users className="w-6 h-6 text-green-600" />
             </div>
             <TrendingUp className="w-5 h-5 text-green-500" />
           </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{franchise.revenue}</p>
-          <p className="text-sm text-gray-600">Total Revenue</p>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="p-3 bg-amber-100 rounded-lg">
-              <Award className="w-6 h-6 text-amber-600" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-gray-900 mb-1">{franchise.performance.placementRate}%</p>
-          <p className="text-sm text-gray-600">Placement Rate</p>
+          <p className="text-2xl font-bold text-gray-900 mb-1">{franchise.students}</p>
+          <p className="text-sm text-gray-600">Enrolled Students</p>
         </motion.div>
       </div>
 
@@ -355,45 +425,43 @@ const FranchiseDetails = () => {
           {/* Courses Tab */}
           {activeTab === 'courses' && (
             <div>
-              <div className="flex justify-between items-center mb-6">
+              <div className="mb-6">
                 <h3 className="text-lg font-bold text-gray-900">Course Offerings</h3>
-                <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
-                  Add Course
-                </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {courses.map(course => (
-                  <div key={course.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div key={course._id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h4 className="font-bold text-gray-900 mb-1">{course.name}</h4>
                         <div className="flex items-center gap-2">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            course.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'
-                          }`}>
-                            {course.active ? '● Active' : '● Inactive'}
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                            ● Active
                           </span>
                         </div>
                       </div>
-                      <button className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-                        <Edit className="w-4 h-4 text-gray-600" />
-                      </button>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
-                        <p className="text-gray-600">Students</p>
-                        <p className="font-medium text-gray-900">{course.students}</p>
+                        <p className="text-gray-600">Type</p>
+                        <p className="font-medium text-gray-900">{course.type || 'N/A'}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600">Revenue</p>
-                        <p className="font-medium text-gray-900">{course.revenue}</p>
+                        <p className="text-gray-600">Duration</p>
+                        <p className="font-medium text-gray-900">{course.duration || 'N/A'}</p>
                       </div>
-                      <div className="col-span-2">
-                        <p className="text-gray-600 mb-1">Completion Rate</p>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
-                          <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${course.completion}%` }}></div>
-                        </div>
-                        <p className="text-xs text-gray-600 mt-1">{course.completion}%</p>
+                      <div>
+                        <p className="text-gray-600">Fee</p>
+                        <p className="font-medium text-gray-900">₹{course.fee || 0}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-600">Students</p>
+                        <p className="font-medium text-gray-900">
+                          {students.filter(s => {
+                            const courseId = typeof s.course === 'object' ? s.course._id : s.course;
+                            return courseId === course._id;
+                          }).length}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -490,7 +558,10 @@ const FranchiseDetails = () => {
           {activeTab === 'students' && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-bold text-gray-900">Enrolled Students</h3>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Enrolled Students</h3>
+                  <p className="text-sm text-gray-600 mt-1">Students currently enrolled in this franchise ({students.length} total)</p>
+                </div>
                 <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
                   View All Students
                 </button>
@@ -504,35 +575,38 @@ const FranchiseDetails = () => {
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Course</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Enrollment</th>
                       <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Status</th>
-                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Progress</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {students.map(student => (
-                      <tr key={student.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.id}</td>
-                        <td className="px-6 py-4 text-sm text-gray-900">{student.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{student.course}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{new Date(student.enrollment).toLocaleDateString()}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            student.status === 'Active' ? 'bg-green-100 text-green-700' :
-                            student.status === 'Completed' ? 'bg-blue-100 text-blue-700' :
-                            'bg-gray-100 text-gray-700'
-                          }`}>
-                            {student.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-[100px]">
-                              <div className="bg-blue-600 h-2 rounded-full" style={{ width: `${student.progress}%` }}></div>
-                            </div>
-                            <span className="text-xs text-gray-600">{student.progress}%</span>
-                          </div>
+                    {students.length > 0 ? (
+                      students.map(student => (
+                        <tr key={student._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">{student.registrationNumber || student._id}</td>
+                          <td className="px-6 py-4 text-sm text-gray-900">{student.name}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {student.course && typeof student.course === 'object' 
+                              ? student.course.name 
+                              : student.course 
+                              ? 'Course ID: ' + student.course
+                              : 'No course assigned'}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {student.enrollmentDate ? new Date(student.enrollmentDate).toLocaleDateString() : 'N/A'}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+                              Active
+                            </span>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                          No students enrolled in this franchise yet.
                         </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -566,6 +640,8 @@ const FranchiseDetails = () => {
           )}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

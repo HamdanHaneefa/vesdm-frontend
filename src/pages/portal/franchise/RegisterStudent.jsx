@@ -41,22 +41,74 @@ const RegisterStudent = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
+    
+    // Real-time email validation
+    if (e.target.name === 'email' && e.target.value) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(e.target.value)) {
+        setError('Please provide a valid email address');
+      }
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.course) {
+    
+    // Basic validation
+    if (!formData.name || !formData.course || !formData.email) {
       setError('Please fill in all required fields');
       return;
     }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError('Please provide a valid email address');
+      return;
+    }
+
     setSubmitting(true);
+    setError('');
+    
     try {
-      // API Call
-      await apiClient.post('/students', formData);
+      const response = await apiClient.post('/students', formData);
+      console.log('Student registration response:', response.data);
       setSuccess(true);
       setTimeout(() => navigate('/portal/franchise/students'), 2000);
     } catch (err) {
-      setError(err.response?.data?.msg || 'Failed to register student.');
+      console.error('Student registration error:', err);
+
+      const status = err.response?.status;
+      const msg = err.response?.data?.msg || '';
+
+      // Student was saved but email sending failed (500 with email-related message)
+      // or any non-400/401/403/404 error where student may have been created
+      if (status === 500 || (!status && err.message?.includes('Network'))) {
+        // Check if it's an email-related failure — student was still saved
+        const isEmailError =
+          msg.toLowerCase().includes('email') ||
+          msg.toLowerCase().includes('mail') ||
+          msg.toLowerCase().includes('smtp') ||
+          msg.toLowerCase().includes('credentials');
+
+        if (isEmailError) {
+          // Student registered successfully, only email failed
+          setSuccess(true);
+          setTimeout(() => navigate('/portal/franchise/students'), 2000);
+          return;
+        }
+      }
+
+      // Actual registration failure
+      if (status === 400) {
+        setError(msg || 'Registration failed. Please check your input and try again.');
+      } else if (status === 409 || msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('already')) {
+        setError('A student with this email already exists.');
+      } else if (status === 401 || status === 403) {
+        setError('You are not authorized to register students.');
+      } else {
+        setError(msg || 'Failed to register student. Please try again.');
+      }
     } finally {
       setSubmitting(false);
     }
@@ -75,7 +127,7 @@ const RegisterStudent = () => {
           <CheckCircle size={24} className="text-emerald-600 flex-shrink-0" />
           <div>
             <p className="font-semibold text-emerald-800">Student Registered Successfully!</p>
-            <p className="text-sm text-emerald-600">Redirecting to students list...</p>
+            <p className="text-sm text-emerald-600">Student has been saved. Redirecting to students list...</p>
           </div>
         </motion.div>
       )}
@@ -140,6 +192,7 @@ const RegisterStudent = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
+                  required
                   className="w-full pl-10 pr-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="student@example.com"
                 />

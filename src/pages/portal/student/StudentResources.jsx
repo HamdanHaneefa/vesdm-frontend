@@ -26,10 +26,10 @@ const StudentResources = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const resourcesUrl = courseId ? `/student/resources?courseId=${courseId}` : '/student/resources';
+        const resourcesUrl = courseId ? `/students/resources?courseId=${courseId}` : '/students/resources';
         const [resourcesRes, coursesRes] = await Promise.all([
           apiClient.get(resourcesUrl),
-          apiClient.get('/student/courses')
+          apiClient.get('/students/courses')
         ]);
         setResources(resourcesRes.data || []);
         setCourses(coursesRes.data || []);

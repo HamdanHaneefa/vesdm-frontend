@@ -67,6 +67,7 @@ import StudentProfile from './pages/portal/student/StudentProfile';
 import StudentCertificates from './pages/portal/student/StudentCertificates';
 import StudentResults from './pages/portal/student/StudentResults';
 import StudentResources from './pages/portal/student/StudentResources';
+import ChangePassword from './pages/portal/student/ChangePassword';
 
 import FranchiseHub from './pages/portal/franchise/FranchiseHub';
 import FranchiseDashboard from './pages/portal/franchise/FranchiseDashboard';
@@ -87,6 +88,7 @@ import FranchiseDetails from './pages/portal/admin/FranchiseDetails';
 import AdminCourseManagement from './pages/portal/admin/CourseManagement';
 import AdminStudentManagement from './pages/portal/admin/StudentManagement';
 import AdmissionManagement from './pages/portal/admin/AdmissionManagement';
+import AdmissionDetails from './pages/portal/admin/AdmissionDetails';
 import FranchiseRequests from './pages/portal/admin/FranchiseRequests';
 import CertificatesAdmin from './pages/portal/admin/CertificatesAdmin';
 import CreateExam from './pages/portal/admin/CreateExam';
@@ -135,6 +137,7 @@ function App() {
                     <Route path="certificates" element={<StudentCertificates />} />
                     <Route path="results" element={<StudentResults />} />
                     <Route path="resources" element={<StudentResources />} />
+                    <Route path="change-password" element={<ChangePassword />} />
                   </Route>
 
                   {/* Franchise Portal - Protected */}
@@ -169,6 +172,7 @@ function App() {
                     <Route index element={<Navigate to="dashboard" replace />} />
                     <Route path="dashboard" element={<AdminDashboard />} />
                     <Route path="admissions" element={<AdmissionManagement />} />
+                    <Route path="admissions/:applicationId" element={<AdmissionDetails />} />
                     <Route path="franchises" element={<FranchiseManagement />} />
                     <Route path="franchises/:franchiseId" element={<FranchiseDetails />} />
                     <Route path="students" element={<AdminStudentManagement />} />

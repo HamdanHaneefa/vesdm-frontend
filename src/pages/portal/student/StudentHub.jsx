@@ -16,6 +16,22 @@ const StudentHub = () => {
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
 
+  // Get appropriate dashboard route based on user role
+  const getDashboardRoute = () => {
+    if (!currentUser?.role) return '/';
+    
+    switch (currentUser.role) {
+      case 'admin':
+        return '/portal/admin/dashboard';
+      case 'franchisee':
+        return '/portal/franchise/dashboard';
+      case 'student':
+        return '/portal/student/dashboard';
+      default:
+        return '/';
+    }
+  };
+
   // Scroll to top on route change - AGGRESSIVE
   useEffect(() => {
     const scrollToTop = () => {
@@ -64,7 +80,7 @@ const StudentHub = () => {
       <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200 shadow-xl">
         {/* Logo Section */}
         <div className="p-6 border-b border-slate-100">
-          <Link to="/" className="flex items-center gap-3 group">
+          <Link to={getDashboardRoute()} className="flex items-center gap-3 group">
             <div className="w-12 h-12 bg-gradient-to-br from-[#007ACC] to-[#0F172A] rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform">
               <GraduationCap size={24} className="text-white" />
             </div>
@@ -211,7 +227,7 @@ const StudentHub = () => {
             >
               <div className="flex flex-col h-full">
                 <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
+                  <Link to={getDashboardRoute()} className="flex items-center gap-3">
                     <div className="w-10 h-10 bg-gradient-to-br from-[#007ACC] to-[#0F172A] rounded-xl flex items-center justify-center">
                       <GraduationCap size={20} className="text-white" />
                     </div>
@@ -219,7 +235,7 @@ const StudentHub = () => {
                       <h1 className="font-bold text-lg text-slate-900">VESDM</h1>
                       <p className="text-xs text-[#007ACC]">Student Portal</p>
                     </div>
-                  </div>
+                  </Link>
                   <button 
                     onClick={() => setShowMobileMenu(false)}
                     className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
