@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
             try {
               const userData = JSON.parse(storedUser);
               setUser(userData);
-            } catch (e) {
+            } catch {
               // If stored data is invalid, create minimal student user
               const studentId = token.split('_')[1];
               const studentUser = {
@@ -56,9 +56,28 @@ export const AuthProvider = ({ children }) => {
             setUser(studentUser);
           }
         } else {
-          // Regular user token - verify with backend
-          const response = await apiClient.get('/auth/me');
-          setUser(response.data.user);
+          // Regular user token - restore from localStorage first, then verify with backend
+          const storedUser = localStorage.getItem('vesdm_user');
+          if (storedUser) {
+            try {
+              const userData = JSON.parse(storedUser);
+              setUser(userData);
+            } catch {
+              // ignore parse error, will be overwritten by backend response
+            }
+          }
+          try {
+            const response = await apiClient.get('/auth/me');
+            setUser(response.data.user);
+            localStorage.setItem('vesdm_user', JSON.stringify(response.data.user));
+          } catch {
+            // If backend verification fails and we had stored data, keep the user logged in
+            // but if there's truly no stored user, clear the token
+            if (!storedUser) {
+              localStorage.removeItem('vesdm_token');
+              setUser(null);
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching current user:', error);
@@ -115,16 +134,15 @@ export const AuthProvider = ({ children }) => {
     // Check every 5 minutes
     const interval = setInterval(verifyUser, 5 * 60 * 1000);
     return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, navigate]);
 
   const login = (token, userData) => {
-    // Store ONLY the token in localStorage
+    // Store the token in localStorage
     localStorage.setItem('vesdm_token', token);
     
-    // For student tokens, also store user data in localStorage
-    if (token.startsWith('student_')) {
-      localStorage.setItem('vesdm_user', JSON.stringify(userData));
-    }
+    // Store user data in localStorage for all token types (restores state on refresh)
+    localStorage.setItem('vesdm_user', JSON.stringify(userData));
     
     // Store user data in memory (React state)
     setUser(userData);
