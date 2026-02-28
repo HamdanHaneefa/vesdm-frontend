@@ -1,341 +1,330 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Clock, BookOpen, Save, Plus } from 'lucide-react';
+import { Clock, Timer, Target, CheckCircle, Loader2 } from 'lucide-react';
+import apiClient from '../../../api/apiClient';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../../contexts/AuthContext';
 
 const CreateExam = () => {
-  const [examDetails, setExamDetails] = useState({
-    examName: '',
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState(null);
+
+  const [form, setForm] = useState({
+    name: '',
     subject: '',
-    examDate: '',
-    examTime: '',
+    customSubject: '',
+    date: '',
+    deadline: '',
+    time: '',
     duration: '',
     totalMarks: '',
     passingMarks: '',
-    applicationDeadline: ''
+    course: '',
   });
 
-  const [exams, setExams] = useState([
-    { id: 1, name: 'Mid-Term Exam - Programming Fundamentals', subject: 'Programming', date: '2026-03-15', totalMarks: 100, passingMarks: 40, deadline: '2026-03-10' },
-    { id: 2, name: 'Mid-Term Exam - Web Technologies', subject: 'Web Tech', date: '2026-03-18', totalMarks: 100, passingMarks: 40, deadline: '2026-03-13' },
-    { id: 3, name: 'Final Exam - Database Management', subject: 'DBMS', date: '2026-03-20', totalMarks: 100, passingMarks: 40, deadline: '2026-03-15' }
-  ]);
+  useEffect(() => {
+    apiClient
+      .get('/courses')
+      .then((res) => setCourses(res.data || []))
+      .catch((err) => console.error('Courses fetch failed', err));
+  }, []);
 
-  const subjects = [
-    'Programming Fundamentals',
-    'Web Technologies',
-    'Database Management',
-    'Data Structures',
-    'Digital Marketing Basics',
-    'SEO & Analytics',
-    'Graphic Design Fundamentals',
-    'UI/UX Design',
-    'Mobile App Development'
-  ];
-
-  const handleExamDetailChange = (e) => {
-    const { name, value } = e.target;
-    setExamDetails(prev => ({ ...prev, [name]: value }));
+  const handleChange = (e) => {
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setErrorMsg(null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Validate deadline is before exam date
-    const examDate = new Date(examDetails.examDate);
-    const deadline = new Date(examDetails.applicationDeadline);
-    
-    if (deadline >= examDate) {
-      alert('Application deadline must be before the exam date!');
+    setErrorMsg(null);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const examDate = new Date(form.date);
+    examDate.setHours(0, 0, 0, 0);
+
+    const deadlineDate = new Date(form.deadline);
+    deadlineDate.setHours(0, 0, 0, 0);
+
+    if (examDate < today) {
+      setErrorMsg('Exam date cannot be in the past.');
       return;
     }
-    
-    console.log('Exam Created:', examDetails);
-    
-    // Add to exams list
-    const newExam = {
-      id: exams.length + 1,
-      name: examDetails.examName,
-      subject: examDetails.subject,
-      date: examDetails.examDate,
-      totalMarks: examDetails.totalMarks,
-      passingMarks: examDetails.passingMarks,
-      deadline: examDetails.applicationDeadline
-    };
-    
-    setExams([...exams, newExam]);
-    
-    // Reset form
-    setExamDetails({
-      examName: '',
-      subject: '',
-      examDate: '',
-      examTime: '',
-      duration: '',
-      totalMarks: '',
-      passingMarks: '',
-      applicationDeadline: ''
-    });
-    
-    alert('Exam created successfully!');
-  };
 
-  const handleDeleteExam = (examId) => {
-    if (confirm('Are you sure you want to delete this exam?')) {
-      setExams(exams.filter(exam => exam.id !== examId));
+    if (deadlineDate < today) {
+      setErrorMsg('Registration deadline cannot be in the past.');
+      return;
+    }
+
+    if (deadlineDate >= examDate) {
+      setErrorMsg('Registration deadline must be at least one day before the exam date.');
+      return;
+    }
+
+    if (form.subject === 'other' && !form.customSubject.trim()) {
+      setErrorMsg('Please type the subject name.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        name: form.name.trim(),
+        subject: form.subject === 'other' ? (form.customSubject || '').trim() : form.subject.trim(),
+        date: form.date,
+        deadline: form.deadline,
+        time: form.time,
+        duration: Number(form.duration),
+        totalMarks: Number(form.totalMarks),
+        passingMarks: Number(form.passingMarks),
+        courseId: form.course,
+      };
+
+      await apiClient.post('/exams', payload);
+      alert('Exam created successfully!');
+      navigate('/portal/admin/dashboard');
+    } catch (err) {
+      const msg = err?.response?.data?.msg || 'Failed to create exam.';
+      setErrorMsg(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getDeadlineStatus = (deadline) => {
-    const deadlineDate = new Date(deadline);
-    const today = new Date();
-    const daysLeft = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
-    
-    if (daysLeft < 0) {
-      return { status: 'Closed', color: 'slate', days: 0 };
-    } else if (daysLeft <= 3) {
-      return { status: 'Closing Soon', color: 'red', days: daysLeft };
-    } else if (daysLeft <= 7) {
-      return { status: 'Open', color: 'amber', days: daysLeft };
-    } else {
-      return { status: 'Open', color: 'emerald', days: daysLeft };
-    }
-  };
+  if (user?.role !== 'admin') {
+    return (
+      <div className="p-10 text-center text-red-600 text-xl">
+        Access denied – Admin only
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-red-50 p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <motion.div
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+      <div className="max-w-4xl mx-auto">
+        <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-red-600 via-red-700 to-rose-700 rounded-3xl p-8 text-white shadow-2xl"
+          className="text-3xl md:text-4xl font-bold text-slate-800 mb-2"
         >
-          <div className="flex items-center gap-4">
-            <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-sm">
-              <Calendar className="w-8 h-8" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">Create Examination</h1>
-              <p className="text-red-100 mt-1">Set up new exams and configure exam details</p>
-            </div>
-          </div>
-        </motion.div>
+          Create New Examination
+        </motion.h1>
+        <p className="text-slate-600 mb-8">
+          Set up exam details — students will be registered by franchises.
+        </p>
 
-        {/* Exam Creation Form */}
-        <motion.div
+        {errorMsg && (
+          <div className="mb-6 p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl">
+            {errorMsg}
+          </div>
+        )}
+
+        <motion.form
+          onSubmit={handleSubmit}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-3xl shadow-xl p-8"
+          className="bg-white rounded-2xl shadow-xl p-8 space-y-6 border border-slate-100"
         >
-          <div className="flex items-center gap-3 mb-6">
-            <div className="p-3 bg-blue-100 rounded-xl">
-              <BookOpen className="w-6 h-6 text-blue-600" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Exam Name */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Name *</label>
+              <input
+                name="name"
+                value={form.name}
+                onChange={handleChange}
+                required
+                placeholder="Mid-Term Exam 2026"
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
             </div>
-            <h2 className="text-2xl font-bold text-slate-800">Examination Details</h2>
-          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Name *</label>
+            {/* Course */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Course *</label>
+              <select
+                name="course"
+                value={form.course}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <option value="">Select Subject</option>
+                {courses.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name} ({c.type})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Subject */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Subject *</label>
+              <select
+                name="subject"
+                value={form.subject}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+              >
+                <option value="">Select Subject</option>
+                <option value="Digital Marketing">Digital Marketing</option>
+                <option value="SEO & Social Media Marketing">SEO & Social Media Marketing</option>
+                <option value="Content Strategy & Analytics">Content Strategy & Analytics</option>
+                <option value="Full Stack Web Development">Full Stack Web Development</option>
+                <option value="Frontend Development (HTML/CSS/JS)">Frontend Development (HTML/CSS/JS)</option>
+                <option value="Backend Development (Node.js)">Backend Development (Node.js)</option>
+                <option value="React & Modern Frameworks">React & Modern Frameworks</option>
+                <option value="Database Management">Database Management</option>
+                <option value="Business Management">Business Management</option>
+                <option value="Financial Accounting">Financial Accounting</option>
+                <option value="Leadership & Operations">Leadership & Operations</option>
+                <option value="Graphic Design">Graphic Design</option>
+                <option value="UI/UX Design">UI/UX Design</option>
+                <option value="Mobile App Development">Mobile App Development</option>
+                <option value="Data Structures & Algorithms">Data Structures & Algorithms</option>
+                <option value="Networking & Cybersecurity">Networking & Cybersecurity</option>
+                <option value="Cloud Computing">Cloud Computing</option>
+                <option value="other">Other (type below)</option>
+              </select>
+              {form.subject === 'other' && (
                 <input
                   type="text"
-                  name="examName"
-                  value={examDetails.examName}
-                  onChange={handleExamDetailChange}
-                  placeholder="e.g., Mid-Term Examination 2026"
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Subject *</label>
-                <select
                   name="subject"
-                  value={examDetails.subject}
-                  onChange={handleExamDetailChange}
+                  value={form.customSubject || ''}
+                  onChange={e => setForm(prev => ({ ...prev, customSubject: e.target.value }))}
+                  placeholder="Type subject name..."
                   required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                >
-                  <option value="">Select Subject</option>
-                  {subjects.map(subject => (
-                    <option key={subject} value={subject}>{subject}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Date *</label>
-                <input
-                  type="date"
-                  name="examDate"
-                  value={examDetails.examDate}
-                  onChange={handleExamDetailChange}
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                  autoFocus
+                  className="mt-2 w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
-              </div>
+              )}
+            </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Time *</label>
+            {/* Exam Date */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Date *</label>
+              <input
+                type="date"
+                name="date"
+                value={form.date}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+            </div>
+
+            {/* Exam Time */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Exam Time *</label>
+              <div className="relative">
+                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="time"
-                  name="examTime"
-                  value={examDetails.examTime}
-                  onChange={handleExamDetailChange}
+                  name="time"
+                  value={form.time}
+                  onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Duration (minutes) *</label>
+            {/* Duration */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Duration (minutes) *</label>
+              <div className="relative">
+                <Timer className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="number"
                   name="duration"
-                  value={examDetails.duration}
-                  onChange={handleExamDetailChange}
-                  placeholder="e.g., 180"
+                  value={form.duration}
+                  onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                  min="1"
+                  placeholder="e.g., 180"
+                  className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Total Marks *</label>
+            {/* Total Marks */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Total Marks *</label>
+              <div className="relative">
+                <Target className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="number"
                   name="totalMarks"
-                  value={examDetails.totalMarks}
-                  onChange={handleExamDetailChange}
-                  placeholder="e.g., 100"
+                  value={form.totalMarks}
+                  onChange={handleChange}
                   required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                  min="1"
+                  placeholder="e.g., 100"
+                  className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Passing Marks *</label>
+            {/* Passing Marks */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Passing Marks *</label>
+              <div className="relative">
+                <CheckCircle className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                 <input
                   type="number"
                   name="passingMarks"
-                  value={examDetails.passingMarks}
-                  onChange={handleExamDetailChange}
+                  value={form.passingMarks}
+                  onChange={handleChange}
+                  required
+                  min="0"
                   placeholder="e.g., 40"
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full pl-10 px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Application Deadline *</label>
-                <input
-                  type="date"
-                  name="applicationDeadline"
-                  value={examDetails.applicationDeadline}
-                  onChange={handleExamDetailChange}
-                  max={examDetails.examDate ? examDetails.examDate : undefined}
-                  required
-                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
-                />
-                <p className="text-xs text-slate-500 mt-1">⚠️ Franchises can register students until this date (must be before exam date)</p>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex justify-end gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => setExamDetails({
-                  examName: '',
-                  subject: '',
-                  examDate: '',
-                  examTime: '',
-                  duration: '',
-                  totalMarks: '',
-                  passingMarks: '',
-                  applicationDeadline: ''
-                })}
-                className="px-6 py-3 border-2 border-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 transition-colors"
-              >
-                Reset
-              </button>
-              <button
-                type="submit"
-                className="px-8 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all flex items-center gap-2"
-              >
-                <Plus className="w-5 h-5" />
-                Create Exam
-              </button>
+            {/* Application Deadline */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-semibold text-slate-700 mb-2">Application Deadline *</label>
+              <input
+                type="date"
+                name="deadline"
+                value={form.deadline}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
+              />
+              <p className="text-xs text-amber-600 mt-1">⚠ Franchises can register students until this date (must be before exam date)</p>
             </div>
-          </form>
-        </motion.div>
-
-        {/* Existing Exams List */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-white rounded-3xl shadow-xl p-8"
-        >
-          <h2 className="text-2xl font-bold text-slate-800 mb-6">Scheduled Examinations</h2>
-          
-          <div className="space-y-4">
-            {exams.map((exam) => {
-              const deadlineInfo = getDeadlineStatus(exam.deadline);
-              return (
-                <div key={exam.id} className="border border-slate-200 rounded-2xl p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-lg font-bold text-slate-800">{exam.name}</h3>
-                        <span className={`px-3 py-1 bg-${deadlineInfo.color}-100 text-${deadlineInfo.color}-700 rounded-lg text-xs font-bold`}>
-                          {deadlineInfo.status}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
-                        <div>
-                          <p className="text-xs text-slate-500">Subject</p>
-                          <p className="text-sm font-semibold text-slate-700">{exam.subject}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Exam Date</p>
-                          <p className="text-sm font-semibold text-slate-700">{exam.date}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Total Marks</p>
-                          <p className="text-sm font-semibold text-slate-700">{exam.totalMarks}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Passing Marks</p>
-                          <p className="text-sm font-semibold text-slate-700">{exam.passingMarks}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Application Deadline</p>
-                          <p className="text-sm font-semibold text-red-600">{exam.deadline}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-500">Days Left</p>
-                          <p className={`text-sm font-bold ${deadlineInfo.days === 0 ? 'text-slate-400' : deadlineInfo.days <= 3 ? 'text-red-600' : 'text-emerald-600'}`}>
-                            {deadlineInfo.days === 0 ? 'Closed' : `${deadlineInfo.days} day${deadlineInfo.days !== 1 ? 's' : ''}`}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => handleDeleteExam(exam.id)}
-                      className="ml-4 px-4 py-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors text-sm font-semibold"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
           </div>
-        </motion.div>
+
+          <div className="flex justify-end gap-4 pt-4">
+            <button
+              type="button"
+              onClick={() => navigate('/portal/admin/dashboard')}
+              className="px-6 py-3 border border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-all"
+            >
+              Reset
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-8 py-3 bg-gradient-to-r from-red-600 to-rose-700 text-white rounded-xl font-medium hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+            >
+              {loading && <Loader2 className="animate-spin" size={18} />}
+              {loading ? 'Creating...' : '+ Create Exam'}
+            </button>
+          </div>
+        </motion.form>
       </div>
     </div>
   );

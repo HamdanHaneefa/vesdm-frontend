@@ -14,7 +14,7 @@ const StudentProfile = () => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const response = await apiClient.get('/students/profile');
+        const response = await apiClient.get('/student/profile');
         setStudent(response.data);
         setEditData({ name: response.data.name || '', email: response.data.email || '', phone: response.data.phone || '' });
         setError(null);
@@ -36,7 +36,7 @@ const StudentProfile = () => {
 
   const handleSave = async () => {
     try {
-      const response = await apiClient.put('/students/profile', editData);
+      const response = await apiClient.put('/student/profile', editData);
       setStudent(response.data);
       setIsEditing(false);
     } catch (err) {

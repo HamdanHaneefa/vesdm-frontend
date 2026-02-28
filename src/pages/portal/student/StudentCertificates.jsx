@@ -13,7 +13,7 @@ const StudentCertificates = () => {
       try {
         setLoading(true);
         // We fetch the student profile which contains enrolledCourses
-        const res = await apiClient.get('/students/profile');
+        const res = await apiClient.get('/student/profile');
         
         // Filter enrolledCourses that have a certificate issued
         const issued = (res.data.enrolledCourses || []).filter(

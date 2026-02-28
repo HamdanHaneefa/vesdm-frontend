@@ -50,10 +50,10 @@ const AdminHub = () => {
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, path: '/portal/admin/dashboard' },
-    { id: 'admissions', label: 'Admissions Management', icon: Users, path: '/portal/admin/admissions' },
     { id: 'franchises', label: 'Franchise Management', icon: Building2, path: '/portal/admin/franchises' },
     { id: 'students', label: 'Student Management', icon: Users, path: '/portal/admin/students' },
     { id: 'courses', label: 'Course Management', icon: BookOpen, path: '/portal/admin/courses' },
+    { id: 'admissions', label: 'Admissions Management', icon: Users, path: '/portal/admin/admissions' },
     { id: 'create-exam', label: 'Create Exam', icon: Calendar, path: '/portal/admin/create-exam' },
     { id: 'publish-results', label: 'Publish Results', icon: FileCheck, path: '/portal/admin/publish-results' },
     { id: 'requests', label: 'Franchise Requests', icon: ClipboardCheck, path: '/portal/admin/requests' },

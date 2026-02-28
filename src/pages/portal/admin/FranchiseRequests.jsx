@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  FileText, Search, Calendar, CheckCircle, XCircle,
+  FileText, Search, Calendar, CheckCircle,
   Clock, MoreVertical, Building2, AlertCircle, Mail, Phone, Loader2
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
@@ -176,20 +176,31 @@ const FranchiseRequests = () => {
 
                   {/* Action Buttons */}
                   <div className="flex gap-3">
-                    <button 
-                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                      title="Contact this applicant via email or phone"
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      Contact Applicant
-                    </button>
-                    <button 
+                    {request.phone ? (
+                      <a
+                        href={`tel:${request.phone}`}
+                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                      >
+                        <Phone className="w-4 h-4" />
+                        Contact Applicant
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="flex-1 px-4 py-2 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed flex items-center justify-center gap-2"
+                        title="No phone number provided"
+                      >
+                        <Phone className="w-4 h-4" />
+                        No Phone Available
+                      </button>
+                    )}
+                    <a
+                      href={`mailto:${request.email}?subject=Regarding Your Franchise Inquiry - VESDM&body=Dear ${encodeURIComponent(request.name)},%0A%0AThank you for your interest in a VESDM franchise.%0A%0AWe have received your inquiry and would like to discuss further.%0A%0ABest regards,%0AVESDM Team`}
                       className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
-                      onClick={() => window.location.href = `mailto:${request.email}`}
                     >
                       <Mail className="w-4 h-4" />
                       Send Email
-                    </button>
+                    </a>
                   </div>
                 </div>
               </motion.div>

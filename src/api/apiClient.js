@@ -24,11 +24,13 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 || error.response?.status === 403) {
+    if (error.response?.status === 401) {
+      // Only logout on true auth failure (expired/invalid token)
       console.warn("Authentication error:", error.response.data);
       localStorage.removeItem("vesdm_token");
       window.location.href = "/login";
     }
+    // 403 = Forbidden (business rule, e.g. exam date not reached) — do NOT logout
     return Promise.reject(error);
   },
 );

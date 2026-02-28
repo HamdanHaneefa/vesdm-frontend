@@ -20,8 +20,8 @@ const StudentCourses = () => {
       try {
         setLoading(true);
         const [coursesRes, certsRes] = await Promise.all([
-          apiClient.get('/students/courses'),
-          apiClient.get('/students/certificates')
+          apiClient.get('/student/courses'),
+          apiClient.get('/student/certificates')
         ]);
         console.log("coursesRes", coursesRes)
         setCourses(coursesRes.data || []);
