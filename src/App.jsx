@@ -177,6 +177,7 @@ function App() {
                     <Route path="franchises/:franchiseId" element={<FranchiseDetails />} />
                     <Route path="students" element={<AdminStudentManagement />} />
                     <Route path="courses" element={<AdminCourseManagement />} />
+                    <Route path="courses/:courseId" element={<CourseDetails />} />
                     <Route path="create-exam" element={<CreateExam />} />
                     <Route path="publish-results" element={<PublishExamResults />} />
                     <Route path="requests" element={<FranchiseRequests />} />
