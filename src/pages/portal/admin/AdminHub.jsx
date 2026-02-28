@@ -8,11 +8,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import SEO from '../../../components/SEO';
+import apiClient from '../../../api/apiClient';
 
 const AdminHub = () => {
   const { user: currentUser, logout } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [sidebarStats, setSidebarStats] = useState({ franchises: '...', students: '...', courses: '...' });
   const location = useLocation();
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
@@ -32,6 +34,30 @@ const AdminHub = () => {
         return '/';
     }
   };
+
+  useEffect(() => {
+    const fetchSidebarStats = async () => {
+      try {
+        const [usersRes, studentsRes, coursesRes] = await Promise.all([
+          apiClient.get('/users'),
+          apiClient.get('/students'),
+          apiClient.get('/courses'),
+        ]);
+        const franchiseeCount = (usersRes.data || []).filter(u => u.role === 'franchisee').length;
+        const studentCount = (studentsRes.data || []).length;
+        const courseCount = (coursesRes.data || []).length;
+        setSidebarStats({
+          franchises: franchiseeCount,
+          students: studentCount >= 1000 ? (studentCount / 1000).toFixed(1) + 'K' : studentCount,
+          courses: courseCount,
+        });
+      } catch (err) {
+        console.error('Failed to load sidebar stats', err);
+        setSidebarStats({ franchises: '--', students: '--', courses: '--' });
+      }
+    };
+    fetchSidebarStats();
+  }, []);
 
   useEffect(() => {
     const scrollToTop = () => {
@@ -110,15 +136,15 @@ const AdminHub = () => {
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                <p className="text-xl font-bold">45</p>
+                <p className="text-xl font-bold">{sidebarStats.franchises}</p>
                 <p className="text-[10px] text-red-200">Franchises</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                <p className="text-xl font-bold">5.2K</p>
+                <p className="text-xl font-bold">{sidebarStats.students}</p>
                 <p className="text-[10px] text-red-200">Students</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                <p className="text-xl font-bold">28</p>
+                <p className="text-xl font-bold">{sidebarStats.courses}</p>
                 <p className="text-[10px] text-red-200">Courses</p>
               </div>
             </div>
