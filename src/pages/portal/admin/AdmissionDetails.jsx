@@ -24,7 +24,7 @@ const AdmissionDetails = () => {
         try {
             setLoading(true);
             setError('');
-            const res = await apiClient.get(`/applications/${applicationId}`);
+            const res = await apiClient.get(`/admissions/${applicationId}`);
             setApplication(res.data);
         } catch (err) {
             console.error('Error fetching application:', err);
@@ -37,13 +37,10 @@ const AdmissionDetails = () => {
     const handleStatusUpdate = async (status) => {
         try {
             setActionLoading(true);
-            const endpoint = status === 'approved'
-                ? `/applications/${applicationId}/approve`
-                : `/applications/${applicationId}/reject`;
-            await apiClient.post(endpoint);
+            await apiClient.patch(`/admissions/${applicationId}/status`, { status });
             await fetchApplication();
         } catch (err) {
-            alert(err.response?.data?.msg || 'Failed to update status');
+            alert(err.response?.data?.error || 'Failed to update status');
         } finally {
             setActionLoading(false);
         }
@@ -125,11 +122,11 @@ const AdmissionDetails = () => {
                         <div className="flex items-center gap-4 mb-6">
                             <div className="w-16 h-16 bg-gradient-to-br from-red-500 to-rose-600 rounded-full flex items-center justify-center flex-shrink-0">
                                 <span className="text-white font-bold text-2xl">
-                                    {application?.name?.charAt(0)?.toUpperCase() || '?'}
+                                    {application?.fullName?.charAt(0)?.toUpperCase() || '?'}
                                 </span>
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-gray-900">{application?.name}</h3>
+                                <h3 className="text-xl font-bold text-gray-900">{application?.fullName}</h3>
                                 <p className="text-sm text-gray-500">Applicant</p>
                             </div>
                         </div>
@@ -161,32 +158,70 @@ const AdmissionDetails = () => {
                                 <div>
                                     <p className="text-xs text-gray-500">Applied On</p>
                                     <p className="text-sm font-medium text-gray-900">
-                                        {new Date(application?.appliedDate || application?.createdAt).toLocaleDateString('en-US', {
+                                        {new Date(application?.createdAt).toLocaleDateString('en-US', {
                                             year: 'numeric', month: 'long', day: 'numeric'
                                         })}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Date of Birth</p>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {application?.dob ? new Date(application.dob).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
+                                    </p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <BookOpen className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Study Mode</p>
+                                    <p className="text-sm font-medium text-gray-900 capitalize">{application?.studyMode || '—'}</p>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                <div>
+                                    <p className="text-xs text-gray-500">Preferred Start Date</p>
+                                    <p className="text-sm font-medium text-gray-900">
+                                        {application?.startDate ? new Date(application.startDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : '—'}
                                     </p>
                                 </div>
                             </div>
                         </div>
                     </motion.div>
 
-                    {/* Message Card */}
-                    {application?.message && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 16 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
-                        >
-                            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                                <MessageSquare className="w-5 h-5 text-red-500" />
-                                Message from Applicant
-                            </h2>
-                            <p className="text-gray-700 leading-relaxed bg-gray-50 rounded-lg p-4">
-                                {application.message}
-                            </p>
-                        </motion.div>
-                    )}
+                    {/* Academic Background Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+                    >
+                        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            <MessageSquare className="w-5 h-5 text-red-500" />
+                            Academic Background
+                        </h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="p-3 bg-gray-50 rounded-lg">
+                                <p className="text-xs text-gray-500">Highest Qualification</p>
+                                <p className="text-sm font-medium text-gray-900 mt-0.5">{application?.qualification || '—'}</p>
+                            </div>
+                            <div className="p-3 bg-gray-50 rounded-lg">
+                                <p className="text-xs text-gray-500">Institution</p>
+                                <p className="text-sm font-medium text-gray-900 mt-0.5">{application?.institution || '—'}</p>
+                            </div>
+                            <div className="p-3 bg-gray-50 rounded-lg">
+                                <p className="text-xs text-gray-500">Year of Passing</p>
+                                <p className="text-sm font-medium text-gray-900 mt-0.5">{application?.yearOfPassing || '—'}</p>
+                            </div>
+                            <div className="p-3 bg-gray-50 rounded-lg">
+                                <p className="text-xs text-gray-500">Percentage / Grade</p>
+                                <p className="text-sm font-medium text-gray-900 mt-0.5">{application?.percentage || '—'}</p>
+                            </div>
+                        </div>
+                    </motion.div>
 
                     {/* Documents Card */}
                     {application?.documents?.length > 0 && (

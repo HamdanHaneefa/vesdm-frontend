@@ -156,7 +156,7 @@ const CreateExam = () => {
                 required
                 className="w-full px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500"
               >
-                <option value="">Select Subject</option>
+                <option value="">Select Course</option>
                 {courses.map((c) => (
                   <option key={c._id} value={c._id}>
                     {c.name} ({c.type})

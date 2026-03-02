@@ -7,14 +7,31 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import SEO from '../../../components/SEO';
+import apiClient from '../../../api/apiClient';
 
 const FranchiseHub = () => {
   const { user: currentUser, logout } = useAuth();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [statsData, setStatsData] = useState({ students: '—', programs: '—' });
   const location = useLocation();
   const navigate = useNavigate();
   const scrollContainerRef = useRef(null);
+
+  // Fetch real student & course counts
+  useEffect(() => {
+    Promise.all([
+      apiClient.get('/students'),
+      apiClient.get('/courses'),
+    ]).then(([studentsRes, coursesRes]) => {
+      setStatsData({
+        students: (studentsRes.data || []).length,
+        programs: (coursesRes.data || []).length,
+      });
+    }).catch(() => {
+      setStatsData({ students: '—', programs: '—' });
+    });
+  }, []);
 
   // Function to get the correct dashboard route based on user role
   const getDashboardRoute = () => {
@@ -106,11 +123,11 @@ const FranchiseHub = () => {
             </div>
             <div className="grid grid-cols-2 gap-2 text-center">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                <p className="text-2xl font-bold">125</p>
+                <p className="text-2xl font-bold">{statsData.students}</p>
                 <p className="text-xs text-purple-200">Students</p>
               </div>
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2">
-                <p className="text-2xl font-bold">8</p>
+                <p className="text-2xl font-bold">{statsData.programs}</p>
                 <p className="text-xs text-purple-200">Programs</p>
               </div>
             </div>
@@ -259,11 +276,11 @@ const FranchiseHub = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-center text-sm">
                       <div className="bg-white/10 rounded-lg p-2">
-                        <p className="font-bold">125</p>
+                        <p className="font-bold">{statsData.students}</p>
                         <p className="text-xs text-purple-200">Students</p>
                       </div>
                       <div className="bg-white/10 rounded-lg p-2">
-                        <p className="font-bold">8</p>
+                        <p className="font-bold">{statsData.programs}</p>
                         <p className="text-xs text-purple-200">Programs</p>
                       </div>
                     </div>

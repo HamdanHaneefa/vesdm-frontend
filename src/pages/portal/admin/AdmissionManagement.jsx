@@ -24,7 +24,7 @@ const AdmissionManagement = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await apiClient.get('/applications');
+            const res = await apiClient.get('/admissions');
             setAdmissions(res.data);
             setError('');
         } catch (err) {
@@ -37,10 +37,7 @@ const AdmissionManagement = () => {
 
     const handleStatusUpdate = async (id, status) => {
         try {
-            const endpoint = status === 'approved'
-                ? `/applications/${id}/approve`
-                : `/applications/${id}/reject`;
-            await apiClient.post(endpoint, { status });
+            await apiClient.patch(`/admissions/${id}/status`, { status });
             fetchData();
         } catch (err) {
             alert('Failed to update status');
@@ -49,7 +46,7 @@ const AdmissionManagement = () => {
 
     const filteredAdmissions = admissions.filter(admission => {
         const matchesSearch =
-            admission.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            admission.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             admission.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
             admission.phone?.includes(searchQuery);
 
@@ -166,7 +163,7 @@ const AdmissionManagement = () => {
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Email</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Phone</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Program</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Message</th>
+                                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Study Mode</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Applied On</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
                                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Actions</th>
@@ -178,19 +175,19 @@ const AdmissionManagement = () => {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                                <span className="text-white font-bold text-sm">{admission.name?.charAt(0) || '?'}</span>
+                                                <span className="text-white font-bold text-sm">{admission.fullName?.charAt(0) || '?'}</span>
                                             </div>
                                             <div>
-                                                <p className="text-sm font-medium text-gray-900">{admission.name}</p>
+                                                <p className="text-sm font-medium text-gray-900">{admission.fullName}</p>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-sm text-gray-900">{admission.email}</td>
                                     <td className="px-6 py-4 text-sm text-gray-900">{admission.phone}</td>
                                     <td className="px-6 py-4 text-sm text-gray-900">{admission.course?.name || 'N/A'}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-900 capitalize">{admission.message || '—'}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-900 capitalize">{admission.studyMode || '—'}</td>
                                     <td className="px-6 py-4 text-sm text-gray-600">
-                                        {new Date(admission.appliedDate || admission.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                        {new Date(admission.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                     </td>
                                     <td className="px-6 py-4">
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(admission.status)}`}>

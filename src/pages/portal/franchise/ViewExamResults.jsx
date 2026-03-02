@@ -1,49 +1,86 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Award, Search, Filter, Download, Eye, CheckCircle, XCircle, FileCheck } from 'lucide-react';
+import { Award, Search, Download, CheckCircle, XCircle, FileCheck, Loader2, AlertCircle } from 'lucide-react';
+import apiClient from '../../../api/apiClient';
 
 const ViewExamResults = () => {
   const [selectedExam, setSelectedExam] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [exams, setExams] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [loadingExams, setLoadingExams] = useState(true);
+  const [loadingStudents, setLoadingStudents] = useState(false);
+  const [error, setError] = useState('');
 
-  const exams = [
-    { id: 1, name: 'Mid-Term Exam - Programming Fundamentals', subject: 'Programming', date: '2026-03-15', totalMarks: 100, passingMarks: 40, published: true },
-    { id: 2, name: 'Mid-Term Exam - Web Technologies', subject: 'Web Tech', date: '2026-03-18', totalMarks: 100, passingMarks: 40, published: true },
-    { id: 3, name: 'Final Exam - Database Management', subject: 'DBMS', date: '2026-03-20', totalMarks: 100, passingMarks: 40, published: false }
-  ];
+  // Fetch published exams on mount
+  useEffect(() => {
+    const fetchExams = async () => {
+      try {
+        const res = await apiClient.get('/exams');
+        setExams(res.data || []);
+      } catch {
+        setError('Failed to load exams');
+      } finally {
+        setLoadingExams(false);
+      }
+    };
+    fetchExams();
+  }, []);
 
-  const students = [
-    { id: 1, rollNo: 'VESDM2026001', name: 'Amit Kumar', marks: 85, grade: 'A', status: 'passed', percentage: 85, certificateAvailable: true },
-    { id: 2, rollNo: 'VESDM2026002', name: 'Priya Sharma', marks: 72, grade: 'B+', status: 'passed', percentage: 72, certificateAvailable: true },
-    { id: 3, rollNo: 'VESDM2026003', name: 'Rahul Verma', marks: 58, grade: 'B', status: 'passed', percentage: 58, certificateAvailable: true },
-    { id: 4, rollNo: 'VESDM2027001', name: 'Sneha Patel', marks: 45, grade: 'C', status: 'passed', percentage: 45, certificateAvailable: true },
-    { id: 5, rollNo: 'VESDM2026004', name: 'Vikram Singh', marks: 35, grade: 'F', status: 'failed', percentage: 35, certificateAvailable: false },
-    { id: 6, rollNo: 'VESDM2026005', name: 'Anjali Gupta', marks: 91, grade: 'A+', status: 'passed', percentage: 91, certificateAvailable: true }
-  ];
+  // Fetch students when exam is selected
+  useEffect(() => {
+    if (!selectedExam) {
+      setStudents([]);
+      return;
+    }
+    const fetchStudents = async () => {
+      setLoadingStudents(true);
+      setError('');
+      try {
+        const res = await apiClient.get(`/exams/${selectedExam}/students`);
+        const exam = exams.find(e => e._id === selectedExam);
+        const mapped = (res.data || []).map(s => {
+          const examRecord = s.exams?.find(e => e.examId?.toString() === selectedExam);
+          const marks = examRecord?.marks ?? null;
+          const percentage = marks !== null && exam?.totalMarks
+            ? Math.round((marks / exam.totalMarks) * 100)
+            : null;
+          const isPassed = marks !== null && exam?.passingMarks != null
+            ? marks >= exam.passingMarks
+            : null;
+          return {
+            id: s._id,
+            rollNo: s.registrationNumber,
+            name: s.name,
+            marks,
+            grade: examRecord?.grade ?? null,
+            percentage,
+            status: isPassed === null ? null : (isPassed ? 'passed' : 'failed'),
+          };
+        });
+        setStudents(mapped);
+      } catch {
+        setError('Failed to load student results');
+      } finally {
+        setLoadingStudents(false);
+      }
+    };
+    fetchStudents();
+  }, [selectedExam, exams]);
 
-  const selectedExamData = exams.find(e => e.id === parseInt(selectedExam));
-  
+  const selectedExamData = exams.find(e => e._id === selectedExam);
+
   const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    student.rollNo.toLowerCase().includes(searchQuery.toLowerCase())
+    student.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    student.rollNo?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const getGradeColor = (grade) => {
     const gradeColors = {
-      'A+': 'emerald',
-      'A': 'blue',
-      'B+': 'cyan',
-      'B': 'indigo',
-      'C+': 'purple',
-      'C': 'amber',
-      'F': 'rose'
+      'A+': 'emerald', 'A': 'blue', 'B+': 'cyan', 'B': 'indigo',
+      'C+': 'purple', 'C': 'amber', 'D': 'orange', 'F': 'rose'
     };
     return gradeColors[grade] || 'slate';
-  };
-
-  const handleDownloadCertificate = (student) => {
-    alert(`Downloading certificate for ${student.name} (${student.rollNo})`);
-    // In real implementation, this would generate/download the certificate PDF
   };
 
   return (
@@ -73,32 +110,44 @@ const ViewExamResults = () => {
           transition={{ delay: 0.1 }}
           className="bg-white rounded-3xl shadow-xl p-8"
         >
+          {error && (
+            <div className="flex items-center gap-2 p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+              <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              {error}
+            </div>
+          )}
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2">Select Examination</label>
-              <select
-                value={selectedExam}
-                onChange={(e) => setSelectedExam(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-              >
-                <option value="">Choose an exam</option>
-                {exams.filter(exam => exam.published).map(exam => (
-                  <option key={exam.id} value={exam.id}>
-                    {exam.name} - {exam.date}
-                  </option>
-                ))}
-              </select>
+              {loadingExams ? (
+                <div className="flex items-center gap-2 text-slate-500 text-sm py-3">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Loading exams...
+                </div>
+              ) : (
+                <select
+                  value={selectedExam}
+                  onChange={(e) => setSelectedExam(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
+                >
+                  <option value="">Choose an exam</option>
+                  {exams.map(exam => (
+                    <option key={exam._id} value={exam._id}>
+                      {exam.name} - {new Date(exam.date).toLocaleDateString('en-CA')}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {selectedExamData && (
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-gradient-to-br from-purple-50 to-blue-50 rounded-2xl">
                 <div>
                   <p className="text-sm text-slate-600 mb-1">Subject</p>
-                  <p className="text-lg font-bold text-slate-800">{selectedExamData.subject}</p>
+                  <p className="text-lg font-bold text-slate-800">{selectedExamData.subject || selectedExamData.course?.name || '—'}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-600 mb-1">Date</p>
-                  <p className="text-lg font-bold text-slate-800">{selectedExamData.date}</p>
+                  <p className="text-lg font-bold text-slate-800">{new Date(selectedExamData.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                 </div>
                 <div>
                   <p className="text-sm text-slate-600 mb-1">Total Marks</p>
@@ -141,107 +190,115 @@ const ViewExamResults = () => {
               </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Roll No</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Student Name</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Marks Obtained</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Percentage</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Grade</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Result</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Certificate</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {filteredStudents.map((student) => {
-                    const gradeColor = getGradeColor(student.grade);
-                    const isPassed = student.status === 'passed';
-                    
-                    return (
-                      <tr key={student.id} className="hover:bg-purple-50/50 transition-colors">
-                        <td className="px-6 py-4 text-sm font-medium text-slate-900">{student.rollNo}</td>
-                        <td className="px-6 py-4 text-sm text-slate-700">{student.name}</td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-semibold text-slate-800">
-                            {student.marks} / {selectedExamData.totalMarks}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className="text-sm font-semibold text-slate-800">{student.percentage}%</span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <span className={`px-3 py-1 bg-${gradeColor}-100 text-${gradeColor}-700 rounded-lg text-sm font-semibold`}>
-                            {student.grade}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex items-center gap-2">
-                            {isPassed ? (
-                              <>
-                                <CheckCircle className="w-5 h-5 text-emerald-600" />
-                                <span className="text-emerald-700 font-semibold text-sm">Passed</span>
-                              </>
-                            ) : (
-                              <>
-                                <XCircle className="w-5 h-5 text-rose-600" />
-                                <span className="text-rose-700 font-semibold text-sm">Failed</span>
-                              </>
-                            )}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4">
-                          {student.certificateAvailable ? (
-                            <button
-                              onClick={() => handleDownloadCertificate(student)}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-sm font-semibold hover:shadow-lg hover:-translate-y-0.5 transition-all"
-                            >
-                              <FileCheck className="w-4 h-4" />
-                              Download
-                            </button>
-                          ) : (
-                            <span className="text-sm text-slate-400">Not Available</span>
-                          )}
-                        </td>
+            {loadingStudents ? (
+              <div className="flex items-center justify-center py-16 text-slate-500 gap-2">
+                <Loader2 className="w-6 h-6 animate-spin" /> Loading results...
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <FileCheck className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                <p>No results found for this exam.</p>
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-slate-50">
+                      <tr>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Roll No</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Student Name</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Marks Obtained</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Percentage</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Grade</th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Result</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredStudents.map((student) => {
+                        const gradeColor = getGradeColor(student.grade);
+                        const isPassed = student.status === 'passed';
+                        const hasMarks = student.marks !== null;
 
-            {/* Statistics */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mt-8 p-6 bg-gradient-to-br from-slate-50 to-purple-50 rounded-2xl">
-              <div>
-                <p className="text-sm text-slate-600 mb-1">Total Students</p>
-                <p className="text-2xl font-bold text-slate-800">{filteredStudents.length}</p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600 mb-1">Passed</p>
-                <p className="text-2xl font-bold text-emerald-600">
-                  {filteredStudents.filter(s => s.status === 'passed').length}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600 mb-1">Failed</p>
-                <p className="text-2xl font-bold text-rose-600">
-                  {filteredStudents.filter(s => s.status === 'failed').length}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600 mb-1">Certificates Available</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {filteredStudents.filter(s => s.certificateAvailable).length}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-slate-600 mb-1">Pass Rate</p>
-                <p className="text-2xl font-bold text-blue-600">
-                  {Math.round((filteredStudents.filter(s => s.status === 'passed').length / filteredStudents.length) * 100)}%
-                </p>
-              </div>
-            </div>
+                        return (
+                          <tr key={student.id} className="hover:bg-purple-50/50 transition-colors">
+                            <td className="px-6 py-4 text-sm font-medium text-slate-900">{student.rollNo}</td>
+                            <td className="px-6 py-4 text-sm text-slate-700">{student.name}</td>
+                            <td className="px-6 py-4">
+                              {hasMarks ? (
+                                <span className="text-sm font-semibold text-slate-800">
+                                  {student.marks} / {selectedExamData?.totalMarks}
+                                </span>
+                              ) : (
+                                <span className="text-sm text-slate-400">—</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              {hasMarks ? (
+                                <span className="text-sm font-semibold text-slate-800">{student.percentage}%</span>
+                              ) : (
+                                <span className="text-sm text-slate-400">—</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              {student.grade ? (
+                                <span className={`px-3 py-1 bg-${gradeColor}-100 text-${gradeColor}-700 rounded-lg text-sm font-semibold`}>
+                                  {student.grade}
+                                </span>
+                              ) : (
+                                <span className="text-sm text-slate-400">—</span>
+                              )}
+                            </td>
+                            <td className="px-6 py-4">
+                              {student.status === null ? (
+                                <span className="text-sm text-slate-400">Pending</span>
+                              ) : isPassed ? (
+                                <div className="flex items-center gap-2">
+                                  <CheckCircle className="w-5 h-5 text-emerald-600" />
+                                  <span className="text-emerald-700 font-semibold text-sm">Passed</span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <XCircle className="w-5 h-5 text-rose-600" />
+                                  <span className="text-rose-700 font-semibold text-sm">Failed</span>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Statistics */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 p-6 bg-gradient-to-br from-slate-50 to-purple-50 rounded-2xl">
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Total Students</p>
+                    <p className="text-2xl font-bold text-slate-800">{filteredStudents.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Passed</p>
+                    <p className="text-2xl font-bold text-emerald-600">
+                      {filteredStudents.filter(s => s.status === 'passed').length}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Failed</p>
+                    <p className="text-2xl font-bold text-rose-600">
+                      {filteredStudents.filter(s => s.status === 'failed').length}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-600 mb-1">Pass Rate</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {filteredStudents.filter(s => s.status !== null).length > 0
+                        ? Math.round((filteredStudents.filter(s => s.status === 'passed').length / filteredStudents.filter(s => s.status !== null).length) * 100)
+                        : 0}%
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </motion.div>
         )}
       </div>

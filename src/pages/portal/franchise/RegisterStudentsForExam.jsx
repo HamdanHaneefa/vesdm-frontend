@@ -23,7 +23,7 @@ const RegisterStudentsForExam = () => {
   useEffect(() => {
     setLoading(true);
     apiClient
-      .get('/exams?status=open')
+      .get('/exams')
       .then(res => setExams(res.data || []))
       .catch(() => setMessage({ type: 'error', text: 'Failed to load available exams' }))
       .finally(() => setLoading(false));
@@ -147,7 +147,7 @@ const RegisterStudentsForExam = () => {
           )}
 
           {exams.length === 0 && !loading && (
-            <p className="mt-3 text-sm text-slate-400 italic">No open exams available at the moment.</p>
+            <p className="mt-3 text-sm text-slate-400 italic">No exams available at the moment.</p>
           )}
         </div>
 
