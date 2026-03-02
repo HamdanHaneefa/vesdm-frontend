@@ -81,25 +81,6 @@ const RegisterStudent = () => {
       const status = err.response?.status;
       const msg = err.response?.data?.msg || '';
 
-      // Student was saved but email sending failed (500 with email-related message)
-      // or any non-400/401/403/404 error where student may have been created
-      if (status === 500 || (!status && err.message?.includes('Network'))) {
-        // Check if it's an email-related failure — student was still saved
-        const isEmailError =
-          msg.toLowerCase().includes('email') ||
-          msg.toLowerCase().includes('mail') ||
-          msg.toLowerCase().includes('smtp') ||
-          msg.toLowerCase().includes('credentials');
-
-        if (isEmailError) {
-          // Student registered successfully, only email failed
-          setSuccess(true);
-          setTimeout(() => navigate('/portal/franchise/students'), 2000);
-          return;
-        }
-      }
-
-      // Actual registration failure
       if (status === 400) {
         setError(msg || 'Registration failed. Please check your input and try again.');
       } else if (status === 409 || msg.toLowerCase().includes('duplicate') || msg.toLowerCase().includes('already')) {
