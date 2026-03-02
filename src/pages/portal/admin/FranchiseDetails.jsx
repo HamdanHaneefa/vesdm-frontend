@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Building2, MapPin, Phone, Mail, Calendar, Users, BookOpen,
-  TrendingUp, Edit, Ban, FileText,
-  Download, Lock, Unlock, AlertCircle, Activity
+  TrendingUp, Edit, Trash2, FileText,
+  Download, AlertCircle, X
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
 import LoadingSpinner from '../../../components/LoadingSpinner';
@@ -16,8 +16,11 @@ const FranchiseDetails = () => {
   const [franchise, setFranchise] = useState(null);
   const [students, setStudents] = useState([]);
   const [courses, setCourses] = useState([]);
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleteModal, setDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchFranchiseData = useCallback(async () => {
     try {
@@ -122,6 +125,15 @@ const FranchiseDetails = () => {
       
       setStudents(franchiseStudents);
       setCourses(coursesResponse.data);
+
+      // Fetch real resources
+      try {
+        const resourcesResponse = await apiClient.get('/resources');
+        setResources(resourcesResponse.data);
+      } catch (err) {
+        console.error('Error fetching resources:', err);
+        setResources([]);
+      }
       
     } catch (err) {
       console.error('Error fetching franchise data:', err);
@@ -135,20 +147,17 @@ const FranchiseDetails = () => {
     fetchFranchiseData();
   }, [fetchFranchiseData]);
 
-  // Default data for features not yet implemented
-  const [resources, setResources] = useState([
-    { id: 1, name: 'Course Materials', type: 'PDF', course: 'General', size: '5.2 MB', blocked: false, downloads: 0 },
-    { id: 2, name: 'Video Tutorials', type: 'Video', course: 'General', size: '850 MB', blocked: false, downloads: 0 }
-  ]);
-
-  const activities = [
-    { date: new Date().toISOString().split('T')[0], action: 'Franchise created', details: 'New franchise account created' },
-  ];
-
-  const toggleResourceBlock = (resourceId) => {
-    setResources(resources.map(r => 
-      r.id === resourceId ? { ...r, blocked: !r.blocked } : r
-    ));
+  const handleDeleteFranchise = async () => {
+    try {
+      setDeleting(true);
+      await apiClient.delete(`/users/${franchiseId}`);
+      navigate('/portal/admin/franchises');
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Failed to delete franchise');
+      setDeleteModal(false);
+    } finally {
+      setDeleting(false);
+    }
   };
 
   const getResourceTypeColor = (type) => {
@@ -229,9 +238,12 @@ const FranchiseDetails = () => {
               <Edit className="w-4 h-4" />
               Edit Details
             </button>
-            <button className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2">
-              <Ban className="w-4 h-4" />
-              Suspend Franchise
+            <button
+              onClick={() => setDeleteModal(true)}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Franchise
             </button>
           </div>
         </div>
@@ -294,8 +306,7 @@ const FranchiseDetails = () => {
               { id: 'overview', label: 'Overview', icon: Building2 },
               { id: 'courses', label: 'Courses', icon: BookOpen },
               { id: 'resources', label: 'Resources', icon: FileText },
-              { id: 'students', label: 'Students', icon: Users },
-              { id: 'activities', label: 'Activities', icon: Activity }
+              { id: 'students', label: 'Students', icon: Users }
             ].map(tab => {
               const Icon = tab.icon;
               return (
@@ -476,81 +487,60 @@ const FranchiseDetails = () => {
               <div className="flex justify-between items-center mb-6">
                 <div>
                   <h3 className="text-lg font-bold text-gray-900">Learning Resources</h3>
-                  <p className="text-sm text-gray-600 mt-1">Manage and control resource access for this franchise</p>
+                  <p className="text-sm text-gray-600 mt-1">Resources available for this franchise</p>
                 </div>
-                <div className="text-sm text-gray-600">
-                  Total: {resources.length} resources | Blocked: {resources.filter(r => r.blocked).length}
+                <div className="text-sm text-gray-500">
+                  Total: {resources.length} resource{resources.length !== 1 ? 's' : ''}
                 </div>
               </div>
-              <div className="space-y-3">
-                {resources.map(resource => (
-                  <div key={resource.id} className={`p-4 rounded-lg border-2 transition-all ${
-                    resource.blocked 
-                      ? 'bg-red-50 border-red-200' 
-                      : 'bg-white border-gray-200 hover:border-gray-300'
-                  }`}>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-3 flex-1">
-                        <div className={`p-2 rounded-lg ${resource.blocked ? 'bg-red-200' : 'bg-gray-100'}`}>
-                          <FileText className={`w-5 h-5 ${resource.blocked ? 'text-red-700' : 'text-gray-600'}`} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h4 className="font-bold text-gray-900">{resource.name}</h4>
-                            <span className={`px-2 py-0.5 text-xs font-medium rounded ${getResourceTypeColor(resource.type)}`}>
-                              {resource.type}
-                            </span>
-                            {resource.blocked && (
-                              <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-bold rounded flex items-center gap-1">
-                                <Lock className="w-3 h-3" />
-                                BLOCKED
+              {resources.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
+                  <p>No resources available yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {resources.map(resource => (
+                    <div key={resource._id} className="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-300 transition-all">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="p-2 bg-gray-100 rounded-lg">
+                            <FileText className="w-5 h-5 text-gray-600" />
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold text-gray-900">{resource.title}</h4>
+                              <span className={`px-2 py-0.5 text-xs font-medium rounded ${getResourceTypeColor(resource.type)}`}>
+                                {resource.type}
                               </span>
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              {resource.course?.name && <span>Course: {resource.course.name}</span>}
+                              {resource.size && <span>Size: {resource.size}</span>}
+                              {resource.category && <span className="capitalize">{resource.category}</span>}
+                              {resource.uploadDate && (
+                                <span>Uploaded: {new Date(resource.uploadDate).toLocaleDateString()}</span>
+                              )}
+                            </div>
+                            {resource.description && (
+                              <p className="text-xs text-gray-400 mt-1">{resource.description}</p>
                             )}
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-gray-600">
-                            <span>Course: {resource.course}</span>
-                            <span>Size: {resource.size}</span>
-                            <span>Downloads: {resource.downloads}</span>
-                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button 
-                          onClick={() => toggleResourceBlock(resource.id)}
-                          className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
-                            resource.blocked
-                              ? 'bg-green-600 text-white hover:bg-green-700'
-                              : 'bg-red-600 text-white hover:bg-red-700'
-                          }`}
+                        <a
+                          href={resource.fileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Download"
                         >
-                          {resource.blocked ? (
-                            <>
-                              <Unlock className="w-4 h-4" />
-                              Unblock
-                            </>
-                          ) : (
-                            <>
-                              <Lock className="w-4 h-4" />
-                              Block
-                            </>
-                          )}
-                        </button>
-                        <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                           <Download className="w-4 h-4 text-gray-600" />
-                        </button>
+                        </a>
                       </div>
                     </div>
-                    {resource.blocked && (
-                      <div className="mt-3 p-3 bg-red-100 border border-red-200 rounded-lg flex items-start gap-2">
-                        <AlertCircle className="w-4 h-4 text-red-700 mt-0.5" />
-                        <p className="text-sm text-red-700">
-                          This resource is currently blocked and cannot be accessed by students in this franchise.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -613,35 +603,77 @@ const FranchiseDetails = () => {
             </div>
           )}
 
-          {/* Activities Tab */}
-          {activeTab === 'activities' && (
-            <div>
-              <h3 className="text-lg font-bold text-gray-900 mb-6">Recent Activities</h3>
-              <div className="space-y-4">
-                {activities.map((activity, index) => (
-                  <div key={index} className="flex gap-4 p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-shrink-0">
-                      <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                        <Activity className="w-5 h-5 text-red-600" />
-                      </div>
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-900 mb-1">{activity.action}</p>
-                      <p className="text-sm text-gray-600 mb-2">{activity.details}</p>
-                      <div className="flex items-center gap-2 text-xs text-gray-500">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(activity.date).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => !deleting && setDeleteModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-red-100 rounded-xl">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <button
+                  onClick={() => !deleting && setDeleteModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Delete Franchise</h2>
+              <p className="text-gray-600 mb-1">
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-gray-900">{franchise?.name}</span>?
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                This will permanently remove the franchise account and their login access. This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteModal(false)}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteFranchise}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Delete Franchise
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, Search, Filter, Download, Eye, Edit, Ban, CheckCircle,
-  XCircle, Mail, Phone, MapPin, Calendar, BookOpen, Award,
-  TrendingUp, Clock, AlertCircle, MoreVertical, Building2
+  Users, Search, Download,
+  CheckCircle, Mail, Phone, Calendar, BookOpen,
+  TrendingUp, AlertCircle, Building2, Trash2, X
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
 import LoadingSpinner from '../../../components/LoadingSpinner';
 
 const StudentManagement = () => {
-  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [franchiseFilter, setFranchiseFilter] = useState('all');
   const [courseFilter, setCourseFilter] = useState('all');
@@ -18,6 +16,8 @@ const StudentManagement = () => {
   const [franchises, setFranchises] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [deleteModal, setDeleteModal] = useState({ open: false, student: null });
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -94,6 +94,20 @@ const StudentManagement = () => {
   const getFranchiseName = (franchiseeId) => {
     const franchise = franchises.find(f => f._id === franchiseeId);
     return franchise ? franchise.name || franchise.email : 'N/A';
+  };
+
+  const handleDelete = async () => {
+    if (!deleteModal.student) return;
+    try {
+      setDeleting(true);
+      await apiClient.delete(`/students/${deleteModal.student._id}`);
+      setStudents(prev => prev.filter(s => s._id !== deleteModal.student._id));
+      setDeleteModal({ open: false, student: null });
+    } catch (err) {
+      setError(err.response?.data?.msg || 'Failed to delete student');
+    } finally {
+      setDeleting(false);
+    }
   };
 
   if (loading) {
@@ -280,18 +294,12 @@ const StudentManagement = () => {
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <button 
-                        onClick={() => navigate(`/portal/admin/students/${student._id}`)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="Edit Student"
+                      <button
+                        onClick={() => setDeleteModal({ open: true, student })}
+                        className="p-2 hover:bg-red-50 rounded-lg transition-colors group"
+                        title="Delete Student"
                       >
-                        <Edit className="w-4 h-4 text-gray-600" />
-                      </button>
-                      <button 
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                        title="More Actions"
-                      >
-                        <MoreVertical className="w-4 h-4 text-gray-600" />
+                        <Trash2 className="w-4 h-4 text-gray-400 group-hover:text-red-600" />
                       </button>
                     </div>
                   </td>
@@ -334,6 +342,75 @@ const StudentManagement = () => {
           <p className="text-gray-400 text-sm mt-2">Try adjusting your search or filters</p>
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteModal.open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => !deleting && setDeleteModal({ open: false, student: null })}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-red-100 rounded-xl">
+                  <Trash2 className="w-6 h-6 text-red-600" />
+                </div>
+                <button
+                  onClick={() => !deleting && setDeleteModal({ open: false, student: null })}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Delete Student</h2>
+              <p className="text-gray-600 mb-1">
+                Are you sure you want to delete{' '}
+                <span className="font-semibold text-gray-900">{deleteModal.student?.name}</span>?
+              </p>
+              <p className="text-sm text-gray-500 mb-6">
+                Registration: <span className="font-mono">{deleteModal.student?.registrationNumber}</span>
+                <br />
+                This will permanently remove the student and their login account. This action cannot be undone.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setDeleteModal({ open: false, student: null })}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 rounded-xl text-gray-700 font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleting ? (
+                    <>
+                      <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Delete Student
+                    </>
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

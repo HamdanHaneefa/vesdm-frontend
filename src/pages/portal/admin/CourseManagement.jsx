@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, Search, Plus, Edit, Trash2, Eye, EyeOff, Users, 
-  DollarSign, Clock, Award, Calendar,
+  DollarSign, Clock, Calendar,
   CheckCircle, XCircle, AlertCircle, FileText, X, ExternalLink
 } from 'lucide-react';
 import apiClient from '../../../api/apiClient';
@@ -211,7 +211,7 @@ const CourseManagementAdmin = () => {
       value: courses.filter(c => c.rating > 0).length > 0 
         ? (courses.filter(c => c.rating > 0).reduce((acc, c) => acc + c.rating, 0) / courses.filter(c => c.rating > 0).length).toFixed(1)
         : 'N/A', 
-      icon: Award, 
+      icon: BookOpen, 
       color: 'amber',
       change: '4.7/5.0'
     }
@@ -230,12 +230,6 @@ const CourseManagementAdmin = () => {
       default:
         return status;
     }
-  };
-
-  const getVisibilityBadge = (visibility) => {
-    return visibility === 'public' 
-      ? <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded flex items-center gap-1"><Eye size={10} />Public</span>
-      : <span className="px-2 py-1 bg-gray-100 text-gray-600 text-xs font-medium rounded flex items-center gap-1"><EyeOff size={10} />Hidden</span>;
   };
 
   if (loading) {
@@ -368,7 +362,6 @@ const CourseManagementAdmin = () => {
                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{course.description}</p>
                     <div className="flex flex-wrap items-center gap-2">
                       {getStatusBadge(course.status)}
-                      {getVisibilityBadge(course.visibility)}
                       <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded">
                         {course.category}
                       </span>
@@ -378,7 +371,7 @@ const CourseManagementAdmin = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-4 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
+              <div className="grid grid-cols-3 gap-4 mb-4 p-4 bg-gray-50 rounded-lg">
                 <div>
                   <div className="flex items-center gap-2 text-gray-500 mb-1">
                     <Users className="w-4 h-4" />
@@ -391,21 +384,18 @@ const CourseManagementAdmin = () => {
                     <Clock className="w-4 h-4" />
                     <span className="text-xs">Duration</span>
                   </div>
-                  <p className="font-bold text-gray-900">{course.duration || 'N/A'}</p>
+                  <p className="font-bold text-gray-900">
+                    {course.duration ? `${course.duration} months` : 'N/A'}
+                  </p>
                 </div>
                 <div>
                   <div className="flex items-center gap-2 text-gray-500 mb-1">
                     <DollarSign className="w-4 h-4" />
-                    <span className="text-xs">Price</span>
+                    <span className="text-xs">Fee</span>
                   </div>
-                  <p className="font-bold text-gray-900">{course.price || course.fees || 'N/A'}</p>
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 text-gray-500 mb-1">
-                    <Award className="w-4 h-4" />
-                    <span className="text-xs">Rating</span>
-                  </div>
-                  <p className="font-bold text-gray-900">{course.rating > 0 ? course.rating : 'N/A'}</p>
+                  <p className="font-bold text-gray-900">
+                    {course.fee != null ? `₹${course.fee.toLocaleString()}` : 'N/A'}
+                  </p>
                 </div>
               </div>
 

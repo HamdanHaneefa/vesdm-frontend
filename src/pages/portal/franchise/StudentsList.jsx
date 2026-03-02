@@ -20,7 +20,6 @@ const StudentsList = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
-    course: 'all',
     year: 'all'
   });
   const [selectedStudent, setSelectedStudent] = useState(null);
@@ -44,11 +43,6 @@ const StudentsList = () => {
   };
 
   // Derived filter options
-  const allCourses = students
-    .map(s => s.course?.name)
-    .filter(Boolean);
-  const uniqueCourses = ['all', ...new Set(allCourses)];
-
   const uniqueYears = ['all', ...new Set(
     students.map(s => s.year).filter(y => y !== undefined && y !== null)
   )].sort((a, b) => (a === 'all' ? -1 : b === 'all' ? 1 : a - b));
@@ -61,9 +55,7 @@ const StudentsList = () => {
       student.registrationNumber?.toLowerCase().includes(searchLower) ||
       student.email?.toLowerCase().includes(searchLower);
 
-    const matchesCourse =
-      filters.course === 'all' ||
-      student.course?.name === filters.course;
+    const matchesCourse = true;
 
     const matchesYear =
       filters.year === 'all' ||
@@ -71,15 +63,6 @@ const StudentsList = () => {
 
     return matchesSearch && matchesCourse && matchesYear;
   });
-
-  // Helper: get display course info
-  const getCourseDisplay = (course) => {
-    if (!course) return { name: 'N/A', type: '' };
-    return {
-      name: course.name || 'Unknown',
-      type: course.type || ''
-    };
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-purple-50/30 p-6 pb-20">
@@ -136,7 +119,7 @@ const StudentsList = () => {
               transition={{ delay: 0.1 }}
               className="bg-white rounded-2xl shadow-lg p-6 border border-slate-100"
             >
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                   <input
@@ -147,18 +130,6 @@ const StudentsList = () => {
                     className="w-full pl-12 py-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   />
                 </div>
-
-                <select
-                  value={filters.course}
-                  onChange={e => setFilters(prev => ({ ...prev, course: e.target.value }))}
-                  className="w-full py-3 px-4 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                >
-                  {uniqueCourses.map(c => (
-                    <option key={c} value={c}>
-                      {c === 'all' ? 'All Courses' : c}
-                    </option>
-                  ))}
-                </select>
 
                 <select
                   value={filters.year}
@@ -188,7 +159,6 @@ const StudentsList = () => {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Reg. No</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Name</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Contact</th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Course</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Year</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Enrolled</th>
                       <th className="px-6 py-4 text-left text-sm font-semibold text-slate-700">Actions</th>
@@ -197,7 +167,7 @@ const StudentsList = () => {
                   <tbody className="divide-y divide-slate-100">
                     {filteredStudents.length === 0 ? (
                       <tr>
-                        <td colSpan={7} className="px-6 py-16 text-center">
+                        <td colSpan={6} className="px-6 py-16 text-center">
                           <Users className="w-16 h-16 mx-auto text-slate-300 mb-4" />
                           <p className="text-slate-600 text-lg font-medium">No students found</p>
                           <p className="text-slate-500 mt-2">
@@ -207,7 +177,6 @@ const StudentsList = () => {
                       </tr>
                     ) : (
                       filteredStudents.map((student, idx) => {
-                        const courseInfo = getCourseDisplay(student.course);
                         return (
                           <motion.tr
                             key={student._id}
@@ -241,19 +210,6 @@ const StudentsList = () => {
                                 {!student.email && !student.phone && (
                                   <span className="text-slate-400 text-xs">No contact info</span>
                                 )}
-                              </div>
-                            </td>
-                            <td className="px-6 py-4">
-                              <div className="flex items-center gap-2">
-                                <BookOpen size={16} className="text-slate-500 flex-shrink-0" />
-                                <div>
-                                  <p className="font-medium text-slate-900">
-                                    {courseInfo.name}
-                                  </p>
-                                  {courseInfo.type && (
-                                    <p className="text-xs text-slate-500 mt-0.5">{courseInfo.type}</p>
-                                  )}
-                                </div>
                               </div>
                             </td>
                             <td className="px-6 py-4">
