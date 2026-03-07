@@ -67,7 +67,7 @@ const StudentCertificates = () => {
                 </div>
                 
                 <a 
-                  href={`${import.meta.env.VITE_UPLOADS_URL}/${enrollment.certificate.file}`}
+                  href={`${import.meta.env.VITE_UPLOADS_URL || 'https://vesdm-backend-05xm.onrender.com/uploads'}/${enrollment.certificate.file ? enrollment.certificate.file.replace(/ /g, '%20') : ''}`}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-4 md:mt-0 px-6 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all flex items-center gap-2"

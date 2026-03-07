@@ -82,7 +82,7 @@ const CertificatesAdmin = () => {
       studentName: student.name,
       regNo: student.registrationNumber,
       courseName: enrollment.course?.name || 'Unknown',
-      courseId: enrollment.course?._id,
+      courseId: enrollment.course?._id?.toString(),
       // Determine status based on presence of certificate inside enrollment
       status: enrollment.certificate?.number ? 'issued' : 'pending',
       issueDate: enrollment.certificate?.issueDate,
@@ -210,7 +210,7 @@ const CertificatesAdmin = () => {
                   {item.status === 'issued' ? (
                     <div className="flex gap-2">
                       <a
-                        href={`${import.meta.env.VITE_UPLOADS_URL}/${item.file}`}
+                        href={`${import.meta.env.VITE_UPLOADS_URL || 'https://vesdm-backend-05xm.onrender.com/uploads'}/${item.file ? item.file.replace(/ /g, '%20') : ''}`}
                         target="_blank"
                         rel="noreferrer"
                         className="p-2 hover:bg-gray-100 rounded text-blue-600"
@@ -284,7 +284,7 @@ const CertificatesAdmin = () => {
                   >
                     <option value="">-- Choose Course --</option>
                     {selectedStudent?.enrolledCourses?.map(ec => (
-                      <option key={ec.course._id} value={ec.course._id}>
+                      <option key={ec.course._id?.toString()} value={ec.course._id?.toString()}>
                         {ec.course.name}
                       </option>
                     ))}
