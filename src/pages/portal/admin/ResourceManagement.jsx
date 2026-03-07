@@ -340,7 +340,7 @@ const ResourceManagement = () => {
                         </div>
                         <div className="flex gap-3">
                           <a
-                          href={`${resourceUrl}/${resource.fileUrl}`}
+                            href={`${resourceUrl}/${resource.fileUrl.replace(/^\/+/, '')}`}
                             download
                             className="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-semibold hover:shadow-lg transition-all"
                           >
