@@ -27,6 +27,8 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isWakingUp, setIsWakingUp] = useState(false);
+  const [wakeUpSeconds, setWakeUpSeconds] = useState(0);
 
   // Redirect if already logged in
   useEffect(() => {
@@ -63,9 +65,22 @@ const LoginPage = () => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    setIsWakingUp(false);
+    setWakeUpSeconds(0);
+
+    // Start a timer to show "waking up" message after 5s
+    let seconds = 0;
+    const wakeTimer = setInterval(() => {
+      seconds += 1;
+      if (seconds >= 5) {
+        setIsWakingUp(true);
+        setWakeUpSeconds(seconds - 4);
+      } else {
+        setWakeUpSeconds(0);
+      }
+    }, 1000);
 
     try {
-      // Auto-detect if input is email or registration number
       const isEmail = formData.email.includes('@');
       const isRegistrationNumber = formData.email.startsWith('VESDM');
       
@@ -129,13 +144,20 @@ const LoginPage = () => {
       
     } catch (err) {
       console.error('Login error:', err);
+      clearInterval(wakeTimer);
+      const isTimeout = err.code === 'ECONNABORTED' || err.message?.includes('timeout');
       setError(
-        err.response?.data?.msg || 
-        err.response?.data?.message || 
-        err.message ||
-        'Login failed. Please check your credentials and try again.'
+        isTimeout
+          ? 'server_waking'
+          : (err.response?.data?.msg ||
+             err.response?.data?.message ||
+             err.message ||
+             'Login failed. Please check your credentials and try again.')
       );
     } finally {
+      clearInterval(wakeTimer);
+      setIsWakingUp(false);
+      setWakeUpSeconds(0);
       setIsLoading(false);
     }
   };
@@ -292,15 +314,57 @@ const LoginPage = () => {
               </div>
             </div>
 
+            {/* Waking Up Banner (shows while waiting) */}
+            {isLoading && isWakingUp && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-start gap-3 p-4 bg-amber-50 border-2 border-amber-200 rounded-xl text-amber-800"
+              >
+                <span className="text-xl flex-shrink-0">☕</span>
+                <div>
+                  <p className="text-sm font-bold">Server is waking up... ({wakeUpSeconds}s)</p>
+                  <p className="text-xs mt-0.5">The free server was sleeping. Please hold on, it&apos;ll be ready shortly.</p>
+                </div>
+              </motion.div>
+            )}
+
             {/* Error Message */}
             {error && (
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-2 p-4 bg-rose-50 border-2 border-rose-200 rounded-xl text-rose-800"
+                className={`flex items-start gap-3 p-4 rounded-xl border-2 ${
+                  error === 'server_waking'
+                    ? 'bg-amber-50 border-amber-200 text-amber-800'
+                    : 'bg-rose-50 border-rose-200 text-rose-800'
+                }`}
               >
-                <AlertCircle size={18} className="flex-shrink-0" />
-                <span className="text-sm font-medium">{error}</span>
+                {error === 'server_waking' ? (
+                  <>
+                    <span className="text-2xl flex-shrink-0">😴</span>
+                    <div>
+                      <p className="text-sm font-bold">Server is waking up...</p>
+                      <p className="text-xs mt-1 leading-relaxed">
+                        The server was sleeping due to inactivity (free hosting). 
+                        It takes <span className="font-semibold">~30–50 seconds</span> to start up. 
+                        Please try logging in again in a moment.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => { setError(''); handleSubmit({ preventDefault: () => {} }); }}
+                        className="mt-2 text-xs font-bold text-amber-700 underline hover:text-amber-900"
+                      >
+                        Try again now →
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                    <span className="text-sm font-medium">{error}</span>
+                  </>
+                )}
               </motion.div>
             )}
 
@@ -313,7 +377,7 @@ const LoginPage = () => {
               {isLoading ? (
                 <>
                   <Loader2 className="animate-spin" size={20} />
-                  Authenticating...
+                  {isWakingUp ? 'Server waking up...' : 'Authenticating...'}
                 </>
               ) : (
                 <>
@@ -327,7 +391,7 @@ const LoginPage = () => {
           {/* Additional Links */}
           <div className="pt-6 border-t border-slate-200 space-y-3">
             <p className="text-center text-sm text-slate-600">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link to="/admissions" className="text-[#007ACC] font-semibold hover:underline">
                 Apply for Admission
               </Link>

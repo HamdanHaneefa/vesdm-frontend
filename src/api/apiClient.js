@@ -2,7 +2,7 @@ import axios from "axios";
 
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
-  timeout: 10000,
+  timeout: 60000, // 60s to allow Render free tier cold start (~30-50s)
   withCredentials: true,
 });
 
